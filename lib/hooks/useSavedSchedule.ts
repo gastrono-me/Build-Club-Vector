@@ -41,25 +41,24 @@ export function useSavedSchedule(): UseSavedScheduleResult {
   const toggle = useCallback((sessionId: string) => {
     if (!userId) return
 
-    const supabase = createClient()
-    const isSaved = saved.has(sessionId)
-
-    // Optimistic update
+    // Derive isSaved from current state inside the updater to avoid stale
+    // closure bugs when toggle is called multiple times before re-render.
+    let isSaved = false
     setSaved(prev => {
+      isSaved = prev.has(sessionId)
       const next = new Set(prev)
-      if (isSaved) {
-        next.delete(sessionId)
-      } else {
-        next.add(sessionId)
-      }
+      isSaved ? next.delete(sessionId) : next.add(sessionId)
       return next
     })
 
+    // isSaved is set synchronously by the updater above, so it's safe to use
+    // it here before the async Supabase op fires.
     if (isSaved) {
-      supabase
+      // was saved → delete
+      createClient()
         .from("saved_sessions")
         .delete()
-        .eq("session_id", sessionId)
+        .match({ user_id: userId, session_id: sessionId })
         .then(({ error }) => {
           if (error) {
             // Revert on error
@@ -71,7 +70,8 @@ export function useSavedSchedule(): UseSavedScheduleResult {
           }
         })
     } else {
-      supabase
+      // was not saved → insert
+      createClient()
         .from("saved_sessions")
         .insert({ user_id: userId, session_id: sessionId })
         .then(({ error }) => {
@@ -85,7 +85,7 @@ export function useSavedSchedule(): UseSavedScheduleResult {
           }
         })
     }
-  }, [userId, saved])
+  }, [userId])
 
   return { saved, toggle, loading }
 }
