@@ -1,27 +1,14 @@
 "use client"
 
-import React, { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import { createClient } from "@/lib/supabase/client"
+import React from "react"
+import { useProfile } from "@/lib/hooks/useProfile"
 import { RadarFeed } from "@/components/radar/RadarFeed"
 import { colors, spacing } from "@/lib/design/tokens"
 
 export default function RadarPage() {
-  const router = useRouter()
-  const [checked, setChecked] = useState(false)
+  const { loading } = useProfile()
 
-  useEffect(() => {
-    const supabase = createClient()
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) {
-        router.replace("/login")
-      } else {
-        setChecked(true)
-      }
-    })
-  }, [router])
-
-  if (!checked) {
+  if (loading) {
     return (
       <div
         style={{

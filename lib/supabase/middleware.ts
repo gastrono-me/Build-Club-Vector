@@ -41,9 +41,26 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
   )
 
   // Calling getUser() triggers the token refresh if the current token is
-  // about to expire. We ignore the returned user here — auth-gating is the
-  // responsibility of individual route handlers and layouts.
-  await supabase.auth.getUser()
+  // about to expire. The returned user is also used for auth-gating below.
+  const { data: { user } } = await supabase.auth.getUser()
+
+  const pathname = request.nextUrl.pathname
+  const isPublic =
+    pathname === '/login' ||
+    pathname === '/auth/callback' ||
+    pathname.startsWith('/auth/callback/')
+
+  if (!user && !isPublic) {
+    const redirectUrl = new URL('/login', request.url)
+    const redirectResponse = NextResponse.redirect(redirectUrl)
+    // Carry forward any Set-Cookie headers the session refresh may have written.
+    response.headers.forEach((value, key) => {
+      if (key.toLowerCase() === 'set-cookie') {
+        redirectResponse.headers.append(key, value)
+      }
+    })
+    return redirectResponse
+  }
 
   return response
 }
