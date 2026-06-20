@@ -300,7 +300,7 @@ export function ProfileForm() {
         )}
         {saveState === "error" && (
           <span style={{ fontFamily: fonts.body, fontSize: fontSize.body, color: colors.live }}>
-            Save failed — try again
+            Save failed. Try again.
           </span>
         )}
       </div>

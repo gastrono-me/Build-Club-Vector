@@ -38,7 +38,7 @@ export default function LoginPage() {
     })
     if (error) {
       setOauthMsg(
-        `${provider === "google" ? "Google" : "GitHub"} sign-in isn't enabled yet — use the email link above.`
+        `${provider === "google" ? "Google" : "GitHub"} sign-in isn't enabled yet. Use the email link above.`
       )
     }
   }
@@ -58,7 +58,7 @@ export default function LoginPage() {
         <SectionTitle
           kicker="Vector · AABW"
           title="Sign in"
-          note="Use your email to get a magic link — no password needed."
+          note="Use your email to get a magic link, no password needed."
         />
 
         <Card spine="violet" style={{ marginTop: spacing[4] }}>
@@ -92,7 +92,7 @@ export default function LoginPage() {
               />
               {state === "error" && (
                 <p style={{ fontFamily: fonts.body, fontSize: fontSize.meta, color: colors.live, margin: 0 }}>
-                  Something went wrong — try again.
+                  Something went wrong. Try again.
                 </p>
               )}
               <Button

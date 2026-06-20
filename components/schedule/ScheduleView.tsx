@@ -53,7 +53,7 @@ export function ScheduleView() {
             border: `1px solid ${colors.live}`,
           }}
         >
-          Some sessions overlap — check conflicts below.
+          Some sessions overlap. Check the conflicts below.
         </div>
       )}
 

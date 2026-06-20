@@ -40,7 +40,7 @@ export function ReadinessReview() {
             }}
           >
             Paste your project write-up and get a heuristic self-check. This is a
-            local rule-based scan — not a judgment from a human or AI judge.
+            local rule-based scan, not a judgment from a human or AI judge.
           </p>
         </div>
 

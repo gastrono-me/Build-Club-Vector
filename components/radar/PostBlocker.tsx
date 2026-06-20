@@ -146,7 +146,7 @@ export function PostBlocker({ onPost }: PostBlockerProps) {
           <textarea
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            placeholder="Brief description — what are you stuck on?"
+            placeholder="Brief description: what are you stuck on?"
             rows={3}
             style={{
               width: "100%",

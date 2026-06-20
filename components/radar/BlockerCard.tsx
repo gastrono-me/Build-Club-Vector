@@ -133,7 +133,7 @@ export function BlockerCard({
           onClick={handleMeToo}
           disabled={voting || !currentUserId || isOwn}
           aria-pressed={isMine}
-          aria-label={`Me too — ${metooCount}`}
+          aria-label={`Me too, ${metooCount}`}
           style={{
             display: "inline-flex",
             alignItems: "center",

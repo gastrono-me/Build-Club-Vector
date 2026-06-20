@@ -21,7 +21,7 @@ const DAY_OPTIONS: { id: TabId; label: string }[] = [
 
 const BUILD_ZONES = [
   { name: "Main Stage",         desc: "Keynotes, talks, and Demo Day presentations" },
-  { name: "Build Zone A & B",   desc: "Team tables — heads-down building" },
+  { name: "Build Zone A & B",   desc: "Team tables for heads-down building" },
   { name: "Mentor Lounge",      desc: "Drop in for help, roaming mentors" },
   { name: "Snacks & Coffee",    desc: "Fuel for the long sessions" },
   { name: "Quiet / Focus Room", desc: "Need silence? Head here" },
