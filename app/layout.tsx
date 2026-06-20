@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import "./globals.css";
+import { SimClockProvider } from "@/lib/hooks/useSimClock";
+import { AppShell } from "@/components/shell/AppShell";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -37,7 +39,13 @@ export default function RootLayout({
       lang="en"
       className={`${spaceGrotesk.variable} ${inter.variable} ${jetbrainsMono.variable}`}
     >
-      <body>{children}</body>
+      <body>
+        <SimClockProvider>
+          <AppShell>
+            {children}
+          </AppShell>
+        </SimClockProvider>
+      </body>
     </html>
   );
 }

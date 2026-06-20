@@ -1,0 +1,48 @@
+"use client"
+
+import React from "react"
+import { usePathname } from "next/navigation"
+import { TopBar } from "@/components/shell/TopBar"
+import { Nav } from "@/components/shell/Nav"
+
+const BARE_PATHS = ["/login", "/auth/callback"]
+
+function isBare(pathname: string): boolean {
+  return BARE_PATHS.some(p => pathname === p || pathname.startsWith(p + "/"))
+}
+
+export function AppShell({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname()
+
+  if (isBare(pathname)) {
+    return <>{children}</>
+  }
+
+  return (
+    <>
+      <style>{`
+        .vec-main {
+          padding-top: 52px;
+          min-height: 100vh;
+        }
+        /* Desktop: offset left for nav rail */
+        @media (min-width: 768px) {
+          .vec-main {
+            margin-left: 200px;
+          }
+        }
+        /* Mobile: offset bottom for nav bar */
+        @media (max-width: 767px) {
+          .vec-main {
+            padding-bottom: 64px;
+          }
+        }
+      `}</style>
+      <TopBar />
+      <Nav />
+      <main className="vec-main">{children}</main>
+    </>
+  )
+}
+
+export default AppShell
