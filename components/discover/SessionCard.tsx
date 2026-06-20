@@ -62,7 +62,7 @@ export function SessionCard({
             border: "none",
             cursor: "pointer",
             padding: "2px 4px",
-            fontSize: 18,
+            fontSize: fontSize.heading,
             lineHeight: 1,
             color: isSaved ? colors.violet : colors.mutedSoft,
             flexShrink: 0,

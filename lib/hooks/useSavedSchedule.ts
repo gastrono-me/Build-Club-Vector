@@ -25,10 +25,12 @@ export function useSavedSchedule(): UseSavedScheduleResult {
       }
       setUserId(user.id)
 
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("saved_sessions")
         .select("session_id")
+        .eq("user_id", user.id)
       // RLS ensures only the current user's rows are returned
+      if (error) console.error("[useSavedSchedule] fetch error:", error)
       if (data) {
         setSaved(new Set(data.map((row: { session_id: string }) => row.session_id)))
       }

@@ -9,7 +9,7 @@ import { conflictIds } from "@/lib/schedule"
 import { SectionTitle } from "@/components/ui/SectionTitle"
 import { Tag } from "@/components/ui/Tag"
 import { SessionCard } from "@/components/discover/SessionCard"
-import { colors, fonts, fontSize, fontWeight, spacing } from "@/lib/design/tokens"
+import { colors, fonts, fontSize, fontWeight, letterSpacing, radii, spacing } from "@/lib/design/tokens"
 
 export function ScheduleView() {
   const { sessions, days, venues } = useEventData()
@@ -49,7 +49,7 @@ export function ScheduleView() {
             marginBottom: spacing[4],
             padding: `${spacing[3]}px ${spacing[4]}px`,
             background: colors.liveSoft,
-            borderRadius: 8,
+            borderRadius: radii.sm,
             border: `1px solid ${colors.live}`,
           }}
         >
@@ -97,7 +97,7 @@ export function ScheduleView() {
               color: colors.violet,
               textDecoration: "none",
               fontWeight: fontWeight.medium,
-              letterSpacing: "0.04em",
+              letterSpacing: letterSpacing.tag,
             }}
           >
             Browse the schedule →
@@ -108,7 +108,7 @@ export function ScheduleView() {
       {/* Day groups */}
       {sortedDayIndices.map(dayIdx => {
         const daySessions = byDay.get(dayIdx)!
-        const dayMeta = days[dayIdx]
+        const dayMeta = days.find(d => d.idx === dayIdx)
         return (
           <div key={dayIdx} style={{ marginBottom: spacing[8] }}>
             {/* Day sub-header */}
