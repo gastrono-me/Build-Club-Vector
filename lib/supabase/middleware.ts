@@ -1,52 +1,25 @@
-import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 /**
- * Refreshes the Supabase auth session cookie and gates protected routes.
- * Designed to FAIL OPEN: any error (or missing config) returns a plain
- * pass-through response rather than 500-ing every route in the app.
+ * Lightweight, dependency-free auth gate for the Edge middleware.
+ *
+ * We intentionally do NOT import @supabase/ssr / supabase-js here: pulling the
+ * full client into the Edge middleware bundle fails to initialise in Vercel's
+ * Edge runtime. Instead we gate protected routes on the presence of the
+ * Supabase auth cookie. This is a UX gate only — real data access is enforced
+ * by Row-Level Security, and the browser client auto-refreshes the session.
  */
 export async function updateSession(request: NextRequest): Promise<NextResponse> {
-  let response = NextResponse.next({ request })
+  const pathname = request.nextUrl.pathname
+  const isPublic = pathname === '/login' || pathname.startsWith('/auth/callback')
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  // No config -> don't crash the site; just pass through.
-  if (!url || !anon) return response
+  const hasAuthCookie = request.cookies
+    .getAll()
+    .some((c) => c.name.startsWith('sb-') && c.name.includes('-auth-token'))
 
-  try {
-    const supabase = createServerClient(url, anon, {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll()
-        },
-        setAll(cookiesToSet: { name: string; value: string; options: CookieOptions }[]) {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
-          response = NextResponse.next({ request })
-          cookiesToSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options),
-          )
-        },
-      },
-    })
-
-    const { data: { user } } = await supabase.auth.getUser()
-
-    const pathname = request.nextUrl.pathname
-    const isPublic =
-      pathname === '/login' || pathname.startsWith('/auth/callback')
-
-    if (!user && !isPublic) {
-      const redirectResponse = NextResponse.redirect(new URL('/login', request.url))
-      response.headers.forEach((value, key) => {
-        if (key.toLowerCase() === 'set-cookie') redirectResponse.headers.append(key, value)
-      })
-      return redirectResponse
-    }
-
-    return response
-  } catch {
-    // Auth/network/runtime error in middleware must never take down the site.
-    return response
+  if (!hasAuthCookie && !isPublic) {
+    return NextResponse.redirect(new URL('/login', request.url))
   }
+
+  return NextResponse.next({ request })
 }
