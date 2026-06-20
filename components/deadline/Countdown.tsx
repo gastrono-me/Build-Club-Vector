@@ -12,9 +12,10 @@ export function Countdown() {
   const { day, mins } = useSimClock()
   const remaining = toAbsoluteMinutes(DEADLINE) - toAbsoluteMinutes({ day, mins })
 
-  const d = Math.floor(remaining / 1440)
-  const h = Math.floor((remaining % 1440) / 60)
-  const m = remaining % 60
+  const safeRemaining = Math.max(0, remaining)
+  const d = Math.floor(safeRemaining / 1440)
+  const h = Math.floor((safeRemaining % 1440) / 60)
+  const m = safeRemaining % 60
 
   return (
     <Card spine="ink">
