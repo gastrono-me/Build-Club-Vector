@@ -1,10 +1,9 @@
 /**
  * Vector design tokens — the single source of truth for the look.
  *
- * Direction: "field instrument on warm paper". A hackathon toolkit you hold in
- * one hand while standing in a venue. The screen's job is to tell you what is
- * happening now, what's next, and who to meet — so the system reads like a
- * scheduling instrument, not an editorial page.
+ * Direction: "embedding field / architect plotter on technical paper".
+ * The screen reads like a plotter instrument on drafting paper — ink borders,
+ * hard offset shadows, mono uppercase labels, Fraunces display type.
  *
  * Tune the whole product from here. `app/globals.css` mirrors these values as
  * CSS custom properties; the primitives consume the variables. Keep both in
@@ -15,43 +14,51 @@
 /*  Colors                                                             */
 /* ------------------------------------------------------------------ */
 export const colors = {
-  /** Near-black plum. Structural text and high-emphasis surfaces. */
-  ink: '#16131F',
-  /** Warm paper. The working surface everything sits on. */
-  surface: '#F6F3EC',
-  /** Raised panel (cards, modals) above the paper. */
-  panel: '#FFFFFF',
-  /** Hairline on paper. Borders, dividers. */
-  line: '#E4DED2',
+  /** Technical paper. The working surface everything sits on. */
+  ink: '#14143C',
+  /** Near-white paper background. */
+  surface: '#EEF1F4',
+  /** Raised panel / card surface above the paper. */
+  panel: '#EEF1F4',
+  /** Hairline borders, dividers. */
+  line: '#cfd6df',
 
-  /** Brand + structure. Reserved for it; never decorative. */
-  violet: '#5B3DF5',
-  violetSoft: '#EDE9FF',
+  /** Primary accent — vector blue. Used with restraint. */
+  violet: '#2B2BF5',
+  violetSoft: '#E8E8FE',
 
-  /** "Happening now" signal. The one place motion is allowed. */
-  live: '#FF5A36',
-  liveSoft: '#FFE7E0',
+  /** Oxblood — infra / danger accent. */
+  live: '#8A2233',
+  liveSoft: '#F5E0E3',
 
-  /** Added / confirmed / go. */
+  /** Confirmed / go. Kept from original system. */
   go: '#0E9F6E',
   goSoft: '#DEF5EC',
 
-  /** Secondary text on paper. */
-  muted: '#6B6577',
-  /** Tertiary text and inactive icons. */
-  mutedSoft: '#9A93A6',
+  /** Graphite — secondary text. */
+  muted: '#5A5F6B',
+  /** Tertiary — very quiet. */
+  mutedSoft: '#9aa2af',
 
-  /** Always-on-dark text (on ink, violet, live, go fills). */
-  onDark: '#FFFFFF',
+  /** Always-on-dark text (on ink, vector fills). */
+  onDark: '#EEF1F4',
+
+  /* -- Extra palette members exposed for use in primitives -- */
+  /** Raised surface, slightly darker than paper. */
+  paper2: '#E3E8EE',
+  /** Soft line for backgrounds, not borders. */
+  lineSoft: '#dbe1e9',
+  /** Oxblood (alias for live, for semantic clarity). */
+  oxblood: '#8A2233',
 } as const;
 
-/** Avatar fill rotation — deterministic per name. */
+/** Avatar fill rotation — deterministic per name, within new palette. */
 export const avatarPalette = [
-  colors.violet,
-  colors.live,
-  colors.go,
-  '#B26B00',
-  '#0072B5',
+  colors.violet,      // vector blue
+  colors.ink,         // ink
+  colors.oxblood,     // oxblood
+  '#0072B5',          // steel blue
+  '#B26B00',          // amber
 ] as const;
 
 /* ------------------------------------------------------------------ */
@@ -59,27 +66,27 @@ export const avatarPalette = [
 /* ------------------------------------------------------------------ */
 /**
  * Three roles, used with intent:
- *  - display: Space Grotesk. Geometric, slightly mechanical. Titles only.
- *  - body:    Inter. Quiet, legible. Prose and labels.
- *  - mono:    JetBrains Mono. Data, times, kickers, tags. The instrument voice.
+ *  - display: Fraunces. Optical-size serif. Titles only.
+ *  - body:    IBM Plex Sans. Quiet, legible. Prose and labels.
+ *  - mono:    IBM Plex Mono. Data, times, kickers, tags — uppercase tracked.
  *
  * Values reference the CSS variables wired by next/font in app/layout.tsx.
  */
 export const fonts = {
-  display: "var(--font-display), 'Space Grotesk', system-ui, sans-serif",
-  body: "var(--font-body), 'Inter', system-ui, sans-serif",
-  mono: "var(--font-mono), 'JetBrains Mono', ui-monospace, monospace",
+  display: "var(--font-display), 'Fraunces', serif",
+  body: "var(--font-body), 'IBM Plex Sans', system-ui, sans-serif",
+  mono: "var(--font-mono), 'IBM Plex Mono', ui-monospace, monospace",
 } as const;
 
 /** Mobile-first type scale (px). Tight at the top, calm in the body. */
 export const fontSize = {
-  display: 30, // page heroes
-  title: 24, // SectionTitle h2
-  heading: 16, // card titles
-  body: 14, // prose
-  meta: 12.5, // secondary meta
-  label: 11, // mono kickers / tags / data labels
-  micro: 10, // type stamps, fine print
+  display: 30,  // page heroes
+  title: 24,    // SectionTitle h2
+  heading: 16,  // card titles
+  body: 15,     // prose
+  meta: 13,     // secondary meta
+  label: 11,    // mono kickers / tags / data labels
+  micro: 10,    // timestamps, fine print
 } as const;
 
 export const fontWeight = {
@@ -91,25 +98,25 @@ export const fontWeight = {
 
 export const lineHeight = {
   tight: 1.05, // display
-  snug: 1.25, // titles / card headings
+  snug: 1.25,  // titles / card headings
   normal: 1.5, // body prose
 } as const;
 
 export const letterSpacing = {
-  display: '-0.02em', // big type pulls together
-  label: '0.08em', // mono kickers spread out
-  tag: '0.02em', // tag pills, lightly
+  display: '-0.03em', // big type pulls together
+  label: '0.08em',    // mono kickers spread out
+  tag: '0.04em',      // tag pills, tracked
 } as const;
 
 /* ------------------------------------------------------------------ */
 /*  Radii — consistent, never mixed at random                         */
 /* ------------------------------------------------------------------ */
 export const radii = {
-  sm: 8, // small chips, inner controls
-  md: 10, // buttons, icon buttons, inputs
-  lg: 12, // avatars, secondary panels
-  xl: 16, // cards
-  '2xl': 20, // modals
+  sm: 8,    // small chips, inner controls
+  md: 10,   // buttons, icon buttons, inputs
+  lg: 10,   // avatars, secondary panels
+  xl: 10,   // cards (matches --r in mockup)
+  '2xl': 10, // modals
   pill: 999, // tags, toggles
 } as const;
 
@@ -131,17 +138,17 @@ export const spacing = {
 } as const;
 
 /* ------------------------------------------------------------------ */
-/*  Shadows — paper barely floats. Restraint is the point.            */
+/*  Shadows — hard offset, plotter instrument style                    */
 /* ------------------------------------------------------------------ */
 export const shadows = {
-  /** Hairline lift for cards on paper. */
-  card: '0 1px 0 rgba(22, 19, 31, 0.02)',
-  /** Pressed/active toggle. */
+  /** Hard offset shadow on cards — the plotter instrument signature. */
+  card: '6px 6px 0 rgba(20,20,60,0.08)',
+  /** Pressed/active state — reduced offset. */
   inset: '0 1px 2px rgba(0, 0, 0, 0.08)',
-  /** Modal floats well clear of the page. */
-  modal: '0 24px 60px -16px rgba(22, 19, 31, 0.35)',
-  /** Focus ring (violet, low alpha) — applied via outline elsewhere. */
-  focus: '0 0 0 3px rgba(91, 61, 245, 0.28)',
+  /** Modal — same hard offset, larger. */
+  modal: '8px 8px 0 rgba(20,20,60,0.12)',
+  /** Focus ring — vector blue. Applied via outline elsewhere. */
+  focus: '0 0 0 3px rgba(43,43,245,0.28)',
 } as const;
 
 /* ------------------------------------------------------------------ */

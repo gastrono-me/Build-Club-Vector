@@ -1,59 +1,70 @@
 /* ==================================================================
    Vector — global tokens + base styles
-   Direction: "field instrument on warm paper".
+   Direction: "embedding field / architect plotter on technical paper".
    Canonical values live in lib/design/tokens.ts; mirror changes here.
    ================================================================== */
 
 :root {
-  /* Color */
-  --color-ink: #16131f;
-  --color-surface: #f6f3ec;
-  --color-panel: #ffffff;
-  --color-line: #e4ded2;
+  /* ---- Core palette ---- */
+  --paper:        #EEF1F4;
+  --ink:          #14143C;
+  --vector:       #2B2BF5;
+  --oxblood:      #8A2233;
+  --graphite:     #5A5F6B;
+  --paper-2:      #E3E8EE;
+  --line:         #cfd6df;
+  --line-soft:    #dbe1e9;
 
-  --color-violet: #5b3df5;
-  --color-violet-soft: #ede9ff;
-  --color-live: #ff5a36;
-  --color-live-soft: #ffe7e0;
-  --color-go: #0e9f6e;
-  --color-go-soft: #def5ec;
+  /* ---- Semantic aliases (consumed by primitives) ---- */
+  --color-ink:        var(--ink);
+  --color-surface:    var(--paper);
+  --color-panel:      var(--paper);
+  --color-line:       var(--line);
 
-  --color-muted: #6b6577;
-  --color-muted-soft: #9a93a6;
-  --color-on-dark: #ffffff;
+  --color-violet:      var(--vector);
+  --color-violet-soft: #E8E8FE;
+  --color-live:        var(--oxblood);
+  --color-live-soft:   #F5E0E3;
+  --color-go:          #0E9F6E;
+  --color-go-soft:     #DEF5EC;
 
-  /* Fonts (next/font wires the --font-* vars in layout.tsx) */
-  --font-display: var(--font-space-grotesk), "Space Grotesk", system-ui, sans-serif;
-  --font-body: var(--font-inter), "Inter", system-ui, sans-serif;
-  --font-mono: var(--font-jetbrains-mono), "JetBrains Mono", ui-monospace, monospace;
+  --color-muted:      var(--graphite);
+  --color-muted-soft: #9aa2af;
+  --color-on-dark:    var(--paper);
 
-  /* Radii */
-  --radius-sm: 8px;
-  --radius-md: 10px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
-  --radius-2xl: 20px;
+  /* ---- Fonts (next/font wires the --font-* vars in layout.tsx) ---- */
+  --font-display: var(--font-fraunces), "Fraunces", serif;
+  --font-body:    var(--font-ibm-plex-sans), "IBM Plex Sans", system-ui, sans-serif;
+  --font-mono:    var(--font-ibm-plex-mono), "IBM Plex Mono", ui-monospace, monospace;
+
+  /* ---- Radii ---- */
+  --r:           10px;
+  --radius-sm:   8px;
+  --radius-md:   10px;
+  --radius-lg:   10px;
+  --radius-xl:   10px;
+  --radius-2xl:  10px;
   --radius-pill: 999px;
 
-  /* Spacing (4px rhythm) */
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 20px;
-  --space-6: 24px;
-  --space-8: 32px;
+  /* ---- Spacing (4px rhythm) ---- */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-8:  32px;
   --space-10: 40px;
   --space-12: 48px;
   --space-16: 64px;
 
-  /* Shadows */
-  --shadow-card: 0 1px 0 rgba(22, 19, 31, 0.02);
-  --shadow-inset: 0 1px 2px rgba(0, 0, 0, 0.08);
-  --shadow-modal: 0 24px 60px -16px rgba(22, 19, 31, 0.35);
-  --shadow-focus: 0 0 0 3px rgba(91, 61, 245, 0.28);
+  /* ---- Shadows — hard offset, plotter instrument style ---- */
+  --shadow-card:  6px 6px 0 rgba(20,20,60,0.08);
+  --shadow-inset: 0 1px 2px rgba(0,0,0,0.08);
+  --shadow-modal: 8px 8px 0 rgba(20,20,60,0.12);
+  --shadow-focus: 0 0 0 3px rgba(43,43,245,0.28);
 
-  /* Motion */
+  /* ---- Motion ---- */
   --motion-fast: 120ms;
   --motion-base: 180ms;
   --motion-ease: cubic-bezier(0.2, 0, 0, 1);
@@ -81,15 +92,21 @@ html {
 }
 
 body {
-  background: var(--color-surface);
-  color: var(--color-ink);
+  background: var(--paper);
+  color: var(--ink);
   font-family: var(--font-body);
   font-size: 15px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  /* Numerics line up like a readout: tabular figures, no ligatures. */
-  font-feature-settings: "tnum" 1, "cv05" 1;
+  font-feature-settings: "tnum" 1;
+
+  /* Faint plotter grid on the paper — the signature texture */
+  background-image:
+    linear-gradient(var(--line-soft) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line-soft) 1px, transparent 1px);
+  background-size: 32px 32px;
+  background-position: -1px -1px;
 }
 
 img,
@@ -130,25 +147,18 @@ h6 {
   overflow-wrap: break-word;
 }
 
-/* ---------------- Focus: one visible, branded ring everywhere ------ */
+/* ---------------- Focus: vector-blue ring everywhere -------------- */
 :focus-visible {
-  outline: 2px solid var(--color-violet);
+  outline: 2px solid var(--vector);
   outline-offset: 2px;
   border-radius: var(--radius-sm);
 }
 
-/* ---------------- Signature: live pulse ---------------------------- */
-/* The one place motion earns its keep — the "happening now" beat. */
+/* ---------------- Signature: live pulse (oxblood) ----------------- */
 @keyframes vector-pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(255, 90, 54, 0.55);
-  }
-  70% {
-    box-shadow: 0 0 0 6px rgba(255, 90, 54, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(255, 90, 54, 0);
-  }
+  0%   { box-shadow: 0 0 0 0   rgba(138, 34, 51, 0.55); }
+  70%  { box-shadow: 0 0 0 6px rgba(138, 34, 51, 0); }
+  100% { box-shadow: 0 0 0 0   rgba(138, 34, 51, 0); }
 }
 
 /* ---------------- Scrollbar (subtle, on-brand) -------------------- */
@@ -157,9 +167,9 @@ h6 {
   height: 10px;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--color-line);
+  background: var(--line);
   border-radius: var(--radius-pill);
-  border: 3px solid var(--color-surface);
+  border: 3px solid var(--paper);
 }
 ::-webkit-scrollbar-track {
   background: transparent;
@@ -167,10 +177,10 @@ h6 {
 
 ::selection {
   background: var(--color-violet-soft);
-  color: var(--color-ink);
+  color: var(--ink);
 }
 
-/* ---------------- Reduced motion --------------------------------- */
+/* ---------------- Reduced motion ---------------------------------- */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
