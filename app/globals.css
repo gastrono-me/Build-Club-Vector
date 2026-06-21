@@ -147,6 +147,11 @@ h6 {
   overflow-wrap: break-word;
 }
 
+/* Fraunces is a variable opsz serif — let the display type size optically. */
+html {
+  font-optical-sizing: auto;
+}
+
 /* ---------------- Focus: vector-blue ring everywhere -------------- */
 :focus-visible {
   outline: 2px solid var(--vector);
