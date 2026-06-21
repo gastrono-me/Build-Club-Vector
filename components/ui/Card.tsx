@@ -1,11 +1,16 @@
 import React from "react";
 import { colors, radii, shadows, spacing } from "@/lib/design/tokens";
 
-/** Signature accent: a 4px spine down the card's left edge, colored by meaning. */
+/**
+ * Spine prop kept for backward compatibility.
+ * The new look uses ink border + hard offset shadow on all cards.
+ * spine maps to a thin top accent rule in the relevant color
+ * (or vector-blue for "violet", oxblood for "live").
+ */
 export type CardSpine = "violet" | "live" | "go" | "ink" | "none";
 
 export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
-  /** Left spine tone. Encodes type/state (violet=structure, live=now, go=confirmed). */
+  /** Accent spine color. Now rendered as a thin top rule rather than a left stripe. */
   spine?: CardSpine;
   /** Inner padding; defaults to 16px. */
   padding?: number;
@@ -13,7 +18,7 @@ export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 
 const spineColor: Record<Exclude<CardSpine, "none">, string> = {
   violet: colors.violet,
-  live: colors.live,
+  live: colors.oxblood,
   go: colors.go,
   ink: colors.ink,
 };
@@ -32,10 +37,9 @@ export function Card({
       style={{
         position: "relative",
         background: colors.panel,
-        border: `1px solid ${spine === "live" ? colors.live : colors.line}`,
+        border: `1.5px solid ${colors.ink}`,
         borderRadius: radii.xl,
         padding,
-        paddingLeft: hasSpine ? padding + 8 : padding,
         boxShadow: shadows.card,
         overflow: "hidden",
         ...style,
@@ -48,9 +52,10 @@ export function Card({
             position: "absolute",
             left: 0,
             top: 0,
-            bottom: 0,
-            width: 4,
+            right: 0,
+            height: 3,
             background: spineColor[spine],
+            borderRadius: `${radii.xl}px ${radii.xl}px 0 0`,
           }}
         />
       )}

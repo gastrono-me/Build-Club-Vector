@@ -21,8 +21,8 @@ function initialsOf(name: string): string {
 }
 
 export function Avatar({ name, photo, size = 38 }: AvatarProps) {
-  // Avatars are squircles, not circles — they echo the card language.
-  const radius = Math.max(radii.sm, Math.round(size * 0.32));
+  // Circular avatars — consistent with the mockup mark style.
+  const radius = radii.pill;
 
   if (photo) {
     return (
@@ -36,6 +36,7 @@ export function Avatar({ name, photo, size = 38 }: AvatarProps) {
           objectFit: "cover",
           flexShrink: 0,
           display: "block",
+          border: `1.4px solid ${colors.line}`,
         }}
       />
     );
@@ -63,11 +64,12 @@ export function Avatar({ name, photo, size = 38 }: AvatarProps) {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        fontFamily: fonts.display,
+        fontFamily: fonts.mono,
         fontWeight: fontWeight.semibold,
-        fontSize: Math.round(size * 0.36),
+        fontSize: Math.round(size * 0.34),
         lineHeight: 1,
         userSelect: "none",
+        border: `1.4px solid ${colors.line}`,
       }}
     >
       {initialsOf(name)}

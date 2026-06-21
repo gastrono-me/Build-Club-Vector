@@ -39,7 +39,7 @@ export function Modal({ open, onClose, title, children, maxWidth = 420 }: ModalP
       style={{
         position: "fixed",
         inset: 0,
-        background: "rgba(22,19,31,0.45)",
+        background: "rgba(20,20,60,0.45)",
         backdropFilter: "blur(2px)",
         zIndex: 50,
         display: "flex",
@@ -55,6 +55,7 @@ export function Modal({ open, onClose, title, children, maxWidth = 420 }: ModalP
         onClick={(e) => e.stopPropagation()}
         style={{
           background: colors.surface,
+          border: `1.5px solid ${colors.ink}`,
           borderRadius: radii["2xl"],
           boxShadow: shadows.modal,
           width: "100%",
@@ -72,7 +73,7 @@ export function Modal({ open, onClose, title, children, maxWidth = 420 }: ModalP
               alignItems: "center",
               gap: spacing[3],
               padding: "14px 16px",
-              borderBottom: `1px solid ${colors.line}`,
+              borderBottom: `1.5px solid ${colors.ink}`,
               background: colors.panel,
               flexShrink: 0,
             }}
@@ -97,6 +98,9 @@ export function Modal({ open, onClose, title, children, maxWidth = 420 }: ModalP
                 display: "flex",
                 padding: 2,
                 borderRadius: radii.sm,
+                background: "none",
+                border: "none",
+                cursor: "pointer",
               }}
             >
               <X size={19} />

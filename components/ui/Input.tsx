@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { colors, radii, fonts, fontSize, motion, spacing, shadows } from "@/lib/design/tokens";
+import { colors, radii, fonts, fontSize, motion, spacing } from "@/lib/design/tokens";
 
 export interface InputProps
   extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -21,19 +21,20 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
           display: "flex",
           alignItems: "center",
           gap: 8,
-          background: colors.panel,
-          border: `1px solid ${colors.line}`,
+          background: colors.paper2,
+          border: `1.4px solid ${colors.line}`,
           borderRadius: radii.md,
           padding: icon ? "0 12px" : 0,
-          transition: `border-color ${motion.fast} ${motion.ease}, box-shadow ${motion.fast} ${motion.ease}`,
+          transition: `border-color ${motion.fast} ${motion.ease}`,
         }}
         onFocusCapture={(e) => {
           e.currentTarget.style.borderColor = colors.violet;
-          e.currentTarget.style.boxShadow = shadows.focus;
+          e.currentTarget.style.outline = `2px solid ${colors.violet}`;
+          e.currentTarget.style.outlineOffset = "1px";
         }}
         onBlurCapture={(e) => {
           e.currentTarget.style.borderColor = colors.line;
-          e.currentTarget.style.boxShadow = "none";
+          e.currentTarget.style.outline = "none";
         }}
       >
         {icon && <span style={{ color: colors.mutedSoft, display: "flex" }}>{icon}</span>}
@@ -69,7 +70,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             display: "block",
             fontFamily: fonts.mono,
             fontSize: fontSize.label,
-            letterSpacing: "0.06em",
+            letterSpacing: "0.08em",
             textTransform: "uppercase",
             color: colors.muted,
             marginBottom: spacing[2],

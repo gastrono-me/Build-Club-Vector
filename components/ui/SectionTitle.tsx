@@ -10,7 +10,7 @@ import {
 } from "@/lib/design/tokens";
 
 export interface SectionTitleProps {
-  /** Mono eyebrow above the title. Carries the violet tick. */
+  /** Mono eyebrow above the title. Uppercase tracked in graphite/vector. */
   kicker?: string;
   title: string;
   /** Supporting line below the title. */
@@ -25,17 +25,17 @@ export function SectionTitle({ kicker, title, note }: SectionTitleProps) {
           style={{
             display: "inline-flex",
             alignItems: "center",
-            gap: 7,
+            gap: 8,
             fontFamily: fonts.mono,
             fontSize: fontSize.label,
             fontWeight: fontWeight.medium,
-            color: colors.violet,
+            color: colors.muted,
             letterSpacing: letterSpacing.label,
             textTransform: "uppercase",
             marginBottom: spacing[2],
           }}
         >
-          {/* Signature tick: a short violet bar standing in for "vector". */}
+          {/* Vector-blue tick — the plotter accent mark. */}
           <span
             aria-hidden
             style={{
@@ -52,7 +52,7 @@ export function SectionTitle({ kicker, title, note }: SectionTitleProps) {
       <h2
         style={{
           fontFamily: fonts.display,
-          fontWeight: fontWeight.bold,
+          fontWeight: fontWeight.semibold,
           fontSize: fontSize.title,
           lineHeight: lineHeight.tight,
           letterSpacing: letterSpacing.display,
