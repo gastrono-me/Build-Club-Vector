@@ -30,7 +30,7 @@ export default function RadarPage() {
         padding: spacing[4],
       }}
     >
-      <div style={{ maxWidth: 600, margin: "0 auto", paddingBottom: spacing[12] }}>
+      <div style={{ maxWidth: 760, margin: "0 auto", paddingBottom: spacing[12] }}>
         <RadarFeed />
       </div>
     </div>

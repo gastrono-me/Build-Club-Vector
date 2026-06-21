@@ -4,31 +4,64 @@ import React from "react"
 import { useRadar } from "@/lib/hooks/useRadar"
 import { PostBlocker } from "@/components/radar/PostBlocker"
 import { BlockerCard } from "@/components/radar/BlockerCard"
-import { SectionTitle } from "@/components/ui/SectionTitle"
+import { EmbeddingPlot } from "@/components/radar/EmbeddingPlot"
 import { colors, fonts, fontSize, fontWeight, spacing, letterSpacing } from "@/lib/design/tokens"
 
 export function RadarFeed() {
   const { blockers, loading, post, toggleMeToo, meTooCounts, mineMeToo, userId } = useRadar()
+  const [latestId, setLatestId] = React.useState<string | null>(null)
+  const latestTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Group blockers by category, preserving insertion order of first occurrence
-  const groups = React.useMemo(() => {
-    const map = new Map<string, typeof blockers>()
-    for (const b of blockers) {
-      if (!map.has(b.category)) map.set(b.category, [])
-      map.get(b.category)!.push(b)
+  // Track the most-recently posted blocker (newest created_at in the array).
+  // Runs whenever blockers update — first blocker (desc order) is the newest.
+  React.useEffect(() => {
+    if (blockers.length === 0) return
+    const newest = blockers[0]
+    const age = Date.now() - new Date(newest.created_at).getTime()
+    if (age < 10_000) {
+      setLatestId(newest.id)
+      if (latestTimer.current) clearTimeout(latestTimer.current)
+      latestTimer.current = setTimeout(() => setLatestId(null), 8_000)
     }
-    return map
   }, [blockers])
+
+  React.useEffect(() => {
+    return () => {
+      if (latestTimer.current) clearTimeout(latestTimer.current)
+    }
+  }, [])
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: spacing[6] }}>
-      {/* Hero header */}
-      <div>
-        <SectionTitle
-          kicker="Bottleneck Radar"
-          title="What's blocking people?"
-          note="Post your blocker, see who shares it. Updates live across all tabs."
-        />
+      {/* Heading */}
+      <header>
+        <h1
+          style={{
+            fontFamily: fonts.display,
+            fontWeight: fontWeight.semibold,
+            fontSize: "clamp(38px, 9vw, 60px)",
+            lineHeight: 0.96,
+            letterSpacing: "-0.035em",
+            margin: 0,
+            color: colors.ink,
+          }}
+        >
+          Where the room is{" "}
+          <em style={{ fontStyle: "italic", color: colors.violet }}>stuck</em>.
+        </h1>
+        <p
+          style={{
+            marginTop: spacing[3],
+            maxWidth: "46ch",
+            color: colors.muted,
+            fontSize: 15.5,
+            fontFamily: fonts.body,
+          }}
+        >
+          Every blocker is a point in the field. Tap{" "}
+          <strong style={{ color: colors.ink, fontWeight: fontWeight.semibold }}>me too</strong>{" "}
+          and a vector links you to whoever&rsquo;s stuck on the same thing.
+        </p>
         {/* Live pulse indicator */}
         <div
           style={{
@@ -37,121 +70,109 @@ export function RadarFeed() {
             gap: 7,
             fontFamily: fonts.mono,
             fontSize: fontSize.label,
-            color: colors.live,
+            color: colors.violet,
             letterSpacing: letterSpacing.label,
-            marginTop: spacing[1],
+            marginTop: spacing[2],
           }}
         >
           <span
             aria-hidden
             style={{
-              width: 8,
-              height: 8,
+              width: 7,
+              height: 7,
               borderRadius: "50%",
-              background: colors.live,
+              background: colors.violet,
               display: "inline-block",
               animation: "radarPulse 2s ease-in-out infinite",
             }}
           />
           LIVE
         </div>
-      </div>
+      </header>
 
-      {/* Post form */}
+      {/* Hero: Embedding Plot */}
+      <EmbeddingPlot
+        blockers={blockers}
+        meTooCounts={meTooCounts}
+        mineMeToo={mineMeToo}
+        userId={userId}
+        onMeToo={toggleMeToo}
+        latestId={latestId}
+      />
+
+      {/* Post blocker composer */}
       <PostBlocker onPost={post} />
 
-      {/* Feed */}
-      {loading ? (
+      {/* Compact blocker list */}
+      <section aria-label="All blockers">
         <div
           style={{
             fontFamily: fonts.mono,
             fontSize: fontSize.label,
-            color: colors.mutedSoft,
             letterSpacing: letterSpacing.label,
-            textAlign: "center" as const,
-            padding: `${spacing[8]}px 0`,
-          }}
-        >
-          Loading…
-        </div>
-      ) : groups.size === 0 ? (
-        <div
-          style={{
-            fontFamily: fonts.body,
-            fontSize: fontSize.body,
+            textTransform: "uppercase",
             color: colors.muted,
-            textAlign: "center" as const,
-            padding: `${spacing[8]}px 0`,
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            marginBottom: spacing[3],
           }}
         >
-          No blockers yet. Be the first to post one.
+          <span
+            aria-hidden
+            style={{ color: colors.violet, fontSize: 13, lineHeight: 1 }}
+          >
+            →
+          </span>
+          All blockers
+          {!loading && (
+            <span style={{ color: colors.mutedSoft, fontSize: fontSize.micro }}>
+              {blockers.length}
+            </span>
+          )}
         </div>
-      ) : (
-        Array.from(groups.entries()).map(([category, items]) => (
-          <section key={category}>
-            {/* Category heading */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: spacing[2],
-                marginBottom: spacing[3],
-              }}
-            >
-              <span
-                aria-hidden
-                style={{
-                  width: 14,
-                  height: 2,
-                  background: colors.live,
-                  borderRadius: 2,
-                  display: "inline-block",
-                  flexShrink: 0,
-                }}
-              />
-              <h3
-                style={{
-                  margin: 0,
-                  fontFamily: fonts.mono,
-                  fontSize: fontSize.label,
-                  fontWeight: fontWeight.medium,
-                  color: colors.live,
-                  letterSpacing: letterSpacing.label,
-                  textTransform: "uppercase" as const,
-                }}
-              >
-                {category}
-              </h3>
-              <span
-                style={{
-                  fontFamily: fonts.mono,
-                  fontSize: fontSize.micro,
-                  color: colors.mutedSoft,
-                  letterSpacing: "0.04em",
-                  marginLeft: 2,
-                }}
-              >
-                {items.length}
-              </span>
-            </div>
 
-            {/* Cards */}
-            <div style={{ display: "flex", flexDirection: "column", gap: spacing[3] }}>
-              {items.map((blocker) => (
-                <BlockerCard
-                  key={blocker.id}
-                  blocker={blocker}
-                  metooCount={meTooCounts[blocker.id] ?? 0}
-                  isMine={mineMeToo.has(blocker.id)}
-                  isOwn={!!userId && blocker.author_id === userId}
-                  currentUserId={userId}
-                  onMeToo={() => toggleMeToo(blocker.id)}
-                />
-              ))}
-            </div>
-          </section>
-        ))
-      )}
+        {loading ? (
+          <div
+            style={{
+              fontFamily: fonts.mono,
+              fontSize: fontSize.label,
+              color: colors.mutedSoft,
+              letterSpacing: letterSpacing.label,
+              textAlign: "center",
+              padding: `${spacing[8]}px 0`,
+            }}
+          >
+            Loading…
+          </div>
+        ) : blockers.length === 0 ? (
+          <div
+            style={{
+              fontFamily: fonts.body,
+              fontSize: fontSize.body,
+              color: colors.muted,
+              textAlign: "center",
+              padding: `${spacing[8]}px 0`,
+            }}
+          >
+            No blockers yet. Be the first to post one.
+          </div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: spacing[3] }}>
+            {blockers.map((blocker) => (
+              <BlockerCard
+                key={blocker.id}
+                blocker={blocker}
+                metooCount={meTooCounts[blocker.id] ?? 0}
+                isMine={mineMeToo.has(blocker.id)}
+                isOwn={!!userId && blocker.author_id === userId}
+                currentUserId={userId}
+                onMeToo={() => toggleMeToo(blocker.id)}
+              />
+            ))}
+          </div>
+        )}
+      </section>
 
       <style>{`
         @keyframes radarPulse {
