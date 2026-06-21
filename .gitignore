@@ -7,3 +7,4 @@ dist
 
 # local SDD scratch (plans, ledger, reference) — never commit
 .superpowers/
+docs/superpowers/
