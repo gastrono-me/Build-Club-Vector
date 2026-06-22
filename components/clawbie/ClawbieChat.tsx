@@ -42,8 +42,12 @@ export function ClawbieChat() {
   useEffect(() => {
     async function fetchPeople() {
       const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
       const { data } = await supabase.from("profiles").select("id, name, occupation, bio, skills, industries, looking")
-      if (data) setRealPeople(data as ProfileRow[])
+      if (data) {
+        const rows = (data as ProfileRow[]).filter(p => p.id !== user?.id)
+        setRealPeople(rows)
+      }
     }
     fetchPeople()
   }, [])

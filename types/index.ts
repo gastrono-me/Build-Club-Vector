@@ -50,20 +50,6 @@ export interface Profile {
   avatar_url?: string
 }
 
-// ---- Attendee ---------------------------------------------------------------
-
-export interface Attendee {
-  id: string
-  name: string
-  role: string
-  org: string
-  tags: string[]
-  industries: string[]
-  looking: string[]
-  bio: string
-  handle?: string
-}
-
 // ---- Blocker ----------------------------------------------------------------
 
 export interface Blocker {
