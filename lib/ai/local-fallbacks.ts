@@ -150,35 +150,6 @@ export function localAnswer(me: PersonLike, ctx: LocalAnswerCtx, q: string): str
     : `Your day looks full or winding down. Use any gap to build, or check Community Night to meet people.`
 }
 
-// ---- localChatReply ------------------------------------------------------
-
-/**
- * Rule-based fallback for 1:1 chat with an attendee.
- * Ported from legacy/App.jsx:243-256.
- */
-export function localChatReply(me: PersonLike, person: PersonLike & { name?: string; tags?: string[]; industries?: string[] }, text: string): string {
-  const t = text.toLowerCase()
-  const shared = (person.tags ?? []).filter((x) => (me.tags ?? []).includes(x))
-
-  if (
-    t.includes('catchup') ||
-    t.includes('meet up') ||
-    /\bmeet\b/.test(t) ||
-    t.includes('chat') ||
-    t.includes('time') ||
-    t.includes('free')
-  ) {
-    return `Works for me — go ahead and lock in a 15-min catchup, I'm pretty flexible across the week!`
-  }
-  if (t.includes('project') || t.includes('building') || t.includes('idea')) {
-    return `I'm exploring something around ${(person.tags ?? [])[0]}${(person.industries ?? []).length ? ` for ${person.industries![0]}` : ''} — happy to swap notes.`
-  }
-  if (shared.length) {
-    return `Nice, ${shared[0]} is exactly my thing too — let's grab 15 minutes sometime this week.`
-  }
-  return `Sounds good! Looking forward to connecting at AABW 🙌`
-}
-
 // ---- localPitchFeedback -------------------------------------------------
 
 /** Heuristic 3-minute pitch feedback. Ported from main App.jsx:208-212. */
@@ -212,17 +183,3 @@ export function localReason(
     : 'Worth a hello. Overlapping circles at the event.'
 }
 
-// ---- openingLine --------------------------------------------------------
-
-/** Deterministic chat opener. Ported from main App.jsx:240-247. */
-export function openingLine(person: { name: string; tags?: string[]; looking?: string[] }): string {
-  const tag = (person.tags ?? [])[0]
-  const lines = [
-    tag ? `Hey! Saw we're both into ${tag}. Excited to connect at AABW.` : `Hey! Excited to connect at AABW.`,
-    `Hi there! Looking forward to building this week. What are you working on?`,
-    (person.looking ?? [])[0]
-      ? `Hey! I'm looking for a ${person.looking![0].toLowerCase()}. What's your project idea?`
-      : `Hey! I'm around all week. What's your project idea?`,
-  ]
-  return lines[person.name.length % lines.length]
-}

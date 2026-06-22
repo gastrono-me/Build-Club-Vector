@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { localReadinessReview, localAnswer, localChatReply, localPitchFeedback, localReason, openingLine } from '@/lib/ai/local-fallbacks'
+import { localReadinessReview, localAnswer, localPitchFeedback, localReason } from '@/lib/ai/local-fallbacks'
 
 describe('localReadinessReview', () => {
   it('flags missing demo link when absent', () => {
@@ -79,26 +79,6 @@ describe('localAnswer', () => {
   })
 })
 
-describe('localChatReply', () => {
-  const me = { tags: ['Agents', 'Backend'], industries: [], looking: [] }
-  const person = { name: 'Alice', tags: ['Agents', 'Frontend'], industries: ['Fintech'], looking: ['Teammate'] }
-
-  it('catchup/meet query returns scheduling offer', () => {
-    const result = localChatReply(me, person, 'Hey, want to chat?')
-    expect(typeof result).toBe('string')
-    expect(result.length).toBeGreaterThan(0)
-    // Should mention scheduling or flexibility
-    expect(result.toLowerCase()).toMatch(/catchup|15.min|flexible/)
-  })
-
-  it('handles project/idea queries — mentions a tag or industry', () => {
-    const result = localChatReply(me, person, 'What are you building?')
-    expect(typeof result).toBe('string')
-    // Should reference the person's first tag or industry
-    expect(result).toMatch(/Agents|Fintech|Frontend|exploring/)
-  })
-})
-
 describe('localPitchFeedback', () => {
   it('reports an approximate spoken duration from word count', () => {
     const text = Array.from({ length: 130 }, () => 'word').join(' ')
@@ -126,13 +106,3 @@ describe('localReason', () => {
   })
 })
 
-describe('openingLine', () => {
-  it('returns a non-empty opener', () => {
-    const line = openingLine({ name: 'Mai Tran', tags: ['Frontend'], looking: ['Teammate'] })
-    expect(line.length).toBeGreaterThan(0)
-  })
-  it('mentions the first tag when the tag branch is selected', () => {
-    const line = openingLine({ name: 'Ann', tags: ['Frontend'], looking: ['Teammate'] })
-    expect(line).toContain('Frontend')
-  })
-})

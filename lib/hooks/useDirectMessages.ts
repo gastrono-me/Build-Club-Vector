@@ -15,6 +15,7 @@ export function useDirectMessages(otherUserId: string | null): {
   thread: DirectMessage[]
   send: (body: string) => Promise<void>
   loading: boolean
+  meId: string | null
 } {
   const [thread, setThread] = useState<DirectMessage[]>([])
   const [loading, setLoading] = useState(true)
@@ -128,5 +129,5 @@ export function useDirectMessages(otherUserId: string | null): {
     [otherUserId]
   )
 
-  return { thread, send, loading }
+  return { thread, send, loading, meId: userId }
 }
