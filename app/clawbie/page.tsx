@@ -1,5 +1,5 @@
-import { ClawbiePlaceholder } from "@/components/clawbie/ClawbiePlaceholder"
+import { ClawbieChat } from "@/components/clawbie/ClawbieChat"
 
 export default function ClawbiePage() {
-  return <ClawbiePlaceholder />
+  return <ClawbieChat />
 }
