@@ -12,13 +12,11 @@ import {
   MessageCircle,
   Clock,
   Activity,
+  Mic,
   type LucideIcon,
 } from "lucide-react"
 import { colors, fonts, fontSize, fontWeight, spacing, radii, motion } from "@/lib/design/tokens"
-
-function deriveMode(pathname: string): "pulse" | "line" {
-  return pathname === "/deadline" || pathname === "/radar" ? "line" : "pulse"
-}
+import { deriveMode } from "@/lib/mode"
 
 interface NavItem {
   label: string
@@ -38,6 +36,7 @@ const PULSE_ITEMS: NavItem[] = [
 const LINE_ITEMS: NavItem[] = [
   { label: "Deadline Guardian", href: "/deadline", Icon: Clock },
   { label: "Bottleneck Radar", href: "/radar", Icon: Activity },
+  { label: "Pitch Coach", href: "/pitch", Icon: Mic },
 ]
 
 export function Nav() {

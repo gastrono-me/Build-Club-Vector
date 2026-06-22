@@ -3,10 +3,7 @@
 import React from "react"
 import { usePathname, useRouter } from "next/navigation"
 import { colors, fonts, fontSize, fontWeight, radii, spacing, motion } from "@/lib/design/tokens"
-
-function deriveMode(pathname: string): "pulse" | "line" {
-  return pathname === "/deadline" || pathname === "/radar" ? "line" : "pulse"
-}
+import { deriveMode } from "@/lib/mode"
 
 export function ModeToggle() {
   const pathname = usePathname()

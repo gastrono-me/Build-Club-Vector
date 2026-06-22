@@ -159,6 +159,16 @@ html {
   border-radius: var(--radius-sm);
 }
 
+/* ---------------- Spinner (used by vec-spin class) ---------------- */
+@keyframes vec-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.vec-spin {
+  animation: vec-spin 0.75s linear infinite;
+}
+
 /* ---------------- Signature: live pulse (oxblood) ----------------- */
 @keyframes vector-pulse {
   0%   { box-shadow: 0 0 0 0   rgba(138, 34, 51, 0.55); }
