@@ -34,6 +34,9 @@ export default async function handler(req, res) {
       const channel = ably.channels.get(`chat:${chatChannelKey(user.sub, to)}`);
       await channel.publish("message", message);
 
+      const inbox = ably.channels.get(`inbox:${to}`);
+      await inbox.publish("message", { from: user.sub, fromName: user.name, fromPhoto: user.picture, text: message.text, ts: message.ts });
+
       res.status(200).json({ message });
       return;
     }

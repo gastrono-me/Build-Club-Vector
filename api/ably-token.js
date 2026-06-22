@@ -1,4 +1,5 @@
-// Issues an Ably token scoped to exactly one chat channel (the conversation the caller is opening).
+// Issues an Ably token scoped to exactly one chat channel (the conversation the caller is
+// opening), or to the caller's own inbox channel (for live new-message notifications).
 import Ably from "ably";
 import { getSessionUser, chatChannelKey } from "./_lib/session.js";
 
@@ -14,18 +15,18 @@ export default async function handler(req, res) {
       return;
     }
 
-    const { with: withSub } = req.body || {};
-    if (!withSub) {
-      res.status(400).json({ error: "Missing 'with'" });
+    const { with: withSub, inbox } = req.body || {};
+    if (!withSub && !inbox) {
+      res.status(400).json({ error: "Missing 'with' or 'inbox'" });
       return;
     }
 
-    const channel = `chat:${chatChannelKey(user.sub, withSub)}`;
+    const capability = {};
+    if (withSub) capability[`chat:${chatChannelKey(user.sub, withSub)}`] = ["subscribe", "publish", "history"];
+    if (inbox) capability[`inbox:${user.sub}`] = ["subscribe"];
+
     const ably = new Ably.Rest(process.env.ABLY_API_KEY);
-    const tokenRequest = await ably.auth.createTokenRequest({
-      clientId: user.sub,
-      capability: { [channel]: ["subscribe", "publish", "history"] },
-    });
+    const tokenRequest = await ably.auth.createTokenRequest({ clientId: user.sub, capability });
 
     res.status(200).json(tokenRequest);
   } catch (err) {

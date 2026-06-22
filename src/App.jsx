@@ -3,7 +3,7 @@ import * as Ably from "ably";
 import {
   Activity, Radio, CalendarDays, Users, Sparkles, MapPin, Clock,
   Plus, Check, X, Send, AlertTriangle, ArrowRight, Search, Filter,
-  Handshake, Star, Loader2, Camera, MessageCircle, Navigation, Flame, Lock, Radar, Mic, Map, LogOut, Pencil, ExternalLink
+  Handshake, Star, Loader2, Camera, MessageCircle, Navigation, Flame, Lock, Radar, Mic, Map, LogOut, Pencil, ExternalLink, Bell
 } from "lucide-react";
 
 /* ------------------------------------------------------------------ */
@@ -65,6 +65,13 @@ const fmt = (mins) => {
   const ap = h >= 12 ? "PM" : "AM";
   const hh = ((h + 11) % 12) + 1;
   return `${hh}:${String(m).padStart(2, "0")} ${ap}`;
+};
+const timeAgo = (ts) => {
+  const s = Math.max(0, Math.floor((Date.now() - ts) / 1000));
+  if (s < 60) return "now";
+  if (s < 3600) return `${Math.floor(s / 60)}m`;
+  if (s < 86400) return `${Math.floor(s / 3600)}h`;
+  return `${Math.floor(s / 86400)}d`;
 };
 
 let _id = 0;
@@ -270,6 +277,31 @@ async function fetchAblyTokenFor(withSub) {
   });
   if (!res.ok) throw new Error("ably-token");
   return res.json();
+}
+
+async function fetchAblyInboxToken() {
+  const res = await fetch("/api/ably-token", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ inbox: true }),
+  });
+  if (!res.ok) throw new Error("ably-token");
+  return res.json();
+}
+
+async function fetchInbox() {
+  const res = await fetch("/api/notifications");
+  if (!res.ok) throw new Error("notifications");
+  const { inbox } = await res.json();
+  return inbox;
+}
+
+async function markConversationRead(withSub) {
+  await fetch("/api/notifications", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ with: withSub }),
+  });
 }
 
 function LoginScreen({ onLogin }) {
@@ -589,6 +621,9 @@ export default function App() {
   const [realChatThread, setRealChatThread] = useState([]);
   const [realChatLoading, setRealChatLoading] = useState(false);
 
+  const [inbox, setInbox] = useState([]); // [{ sub, name, photo, text, ts, unreadCount }]
+  const [inboxOpen, setInboxOpen] = useState(false);
+
   function applySession({ user, profile, isNew }) {
     setGoogleUser(user);
     setMe(profile.me || { name: user.name || "You", tags: [], industries: [], looking: ["Teammate"], photo: user.picture || null });
@@ -630,8 +665,51 @@ export default function App() {
     fetchRealUsers().then(setRealUsers).catch(() => {});
   }, [authStatus, tab]);
 
+  // hydrate unread inbox once signed in
+  useEffect(() => {
+    if (authStatus !== "in") return;
+    fetchInbox().then(setInbox).catch(() => {});
+  }, [authStatus]);
+
+  // live new-message notifications, independent of which chat (if any) is open
+  const realChatWithRef = useRef(realChatWith);
+  useEffect(() => { realChatWithRef.current = realChatWith; }, [realChatWith]);
+
+  useEffect(() => {
+    if (authStatus !== "in" || !googleUser?.sub) return;
+    let client, channel, cancelled = false;
+    (async () => {
+      try {
+        const tokenRequest = await fetchAblyInboxToken();
+        if (cancelled) return;
+        client = new Ably.Realtime({ authCallback: (_, cb) => cb(null, tokenRequest) });
+        channel = client.channels.get(`inbox:${googleUser.sub}`);
+        channel.subscribe("message", (msg) => {
+          const { from, fromName, fromPhoto, text, ts } = msg.data;
+          setInbox((prev) => {
+            const rest = prev.filter((n) => n.sub !== from);
+            const existing = prev.find((n) => n.sub === from);
+            const entry = { sub: from, name: fromName || existing?.name || "Someone", photo: fromPhoto || existing?.photo || null, text, ts, unreadCount: (existing?.unreadCount || 0) + (realChatWithRef.current === from ? 0 : 1) };
+            return [entry, ...rest].sort((a, b) => b.ts - a.ts);
+          });
+        });
+      } catch {}
+    })();
+    return () => {
+      cancelled = true;
+      channel?.unsubscribe();
+      client?.close();
+    };
+  }, [authStatus, googleUser?.sub]);
+
   const directory = useMemo(() => realUsers.map(realUserToPerson), [realUsers]);
   const attendeesById = useMemo(() => Object.fromEntries(directory.map((a) => [a.id, a])), [directory]);
+  const unreadTotal = inbox.reduce((sum, n) => sum + n.unreadCount, 0);
+
+  function markInboxRead(sub) {
+    setInbox((prev) => prev.map((n) => (n.sub === sub ? { ...n, unreadCount: 0 } : n)));
+    markConversationRead(sub).catch(() => {});
+  }
 
   // simulated event clock — defaults into Day 2 mid-morning so "Now" is alive
   const [sim, setSim] = useState({ day: 1, mins: hm(10, 15) });
@@ -666,6 +744,7 @@ export default function App() {
     setRealChatThread([]);
     setRealChatLoading(true);
     setRealChatWith(sub);
+    markInboxRead(sub);
     fetchChatHistory(sub)
       .then((history) => {
         setRealChatThread(history.map((m) => ({ from: m.from === googleUser?.sub ? "me" : "them", text: m.text })));
@@ -814,6 +893,54 @@ export default function App() {
         </div>
 
         <SimClock sim={sim} setSim={setSim} />
+
+        <div style={{ position: "relative" }}>
+          <button onClick={() => setInboxOpen((o) => !o)} title="Notifications" style={{
+            display: "flex", alignItems: "center", justifyContent: "center", width: 30, height: 30, position: "relative",
+            background: "#fff", border: `1px solid ${C.line}`, borderRadius: 999, cursor: "pointer", color: C.muted,
+          }}>
+            <Bell size={14} />
+            {unreadTotal > 0 && (
+              <span style={{
+                position: "absolute", top: -4, right: -4, minWidth: 16, height: 16, padding: "0 4px",
+                background: C.live, color: "#fff", borderRadius: 999, fontSize: 10, fontWeight: 700,
+                display: "flex", alignItems: "center", justifyContent: "center", fontFamily: FONT_MONO,
+              }}>{unreadTotal > 9 ? "9+" : unreadTotal}</span>
+            )}
+          </button>
+          {inboxOpen && (
+            <>
+              <div onClick={() => setInboxOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 29 }} />
+              <div style={{
+                position: "absolute", top: "calc(100% + 8px)", right: 0, width: 300, maxHeight: 360, overflowY: "auto",
+                background: "#fff", border: `1px solid ${C.line}`, borderRadius: 14, boxShadow: "0 12px 28px rgba(22,19,31,0.14)",
+                zIndex: 30, padding: 8,
+              }}>
+                <div style={{ fontFamily: FONT_DISPLAY, fontWeight: 700, fontSize: 13, padding: "6px 8px" }}>Notifications</div>
+                {inbox.length === 0 && (
+                  <div style={{ fontSize: 13, color: C.muted, padding: "10px 8px" }}>No messages yet.</div>
+                )}
+                {inbox.map((n) => (
+                  <div key={n.sub} onClick={() => { openRealChat(n.sub); setInboxOpen(false); }}
+                    style={{
+                      display: "flex", gap: 10, alignItems: "center", padding: 8, borderRadius: 10, cursor: "pointer",
+                      background: n.unreadCount > 0 ? C.violetSoft : "transparent",
+                    }}>
+                    <Avatar name={n.name} photo={n.photo} size={32} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
+                        <span style={{ fontFamily: FONT_DISPLAY, fontWeight: 600, fontSize: 13 }}>{n.name}</span>
+                        <span style={{ fontFamily: FONT_MONO, fontSize: 10.5, color: C.muted, flexShrink: 0 }}>{timeAgo(n.ts)}</span>
+                      </div>
+                      <div style={{ fontSize: 12.5, color: C.muted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{n.text}</div>
+                    </div>
+                    {n.unreadCount > 0 && <span style={{ width: 8, height: 8, borderRadius: 999, background: C.violet, flexShrink: 0 }} />}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
 
         <button onClick={logout} title="Log out" style={{
           display: "flex", alignItems: "center", justifyContent: "center", width: 30, height: 30,

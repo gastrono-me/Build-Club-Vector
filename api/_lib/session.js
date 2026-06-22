@@ -55,6 +55,20 @@ export async function appendChatMessage(subA, subB, message) {
   const key = `chat:${chatChannelKey(subA, subB)}`;
   await kv.rpush(key, JSON.stringify(message));
   await kv.ltrim(key, -200, -1);
+  await kv.sadd(`convos:${subA}`, subB);
+  await kv.sadd(`convos:${subB}`, subA);
+}
+
+export async function listConversations(sub) {
+  return (await kv.smembers(`convos:${sub}`)) || [];
+}
+
+export async function getLastRead(sub, otherSub) {
+  return (await kv.get(`read:${sub}:${otherSub}`)) || 0;
+}
+
+export async function markRead(sub, otherSub) {
+  await kv.set(`read:${sub}:${otherSub}`, Date.now());
 }
 
 // Returns the Google user attached to the request's session cookie, or null.
