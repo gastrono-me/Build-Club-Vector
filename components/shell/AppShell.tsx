@@ -4,6 +4,7 @@ import React from "react"
 import { usePathname } from "next/navigation"
 import { TopBar } from "@/components/shell/TopBar"
 import { Nav } from "@/components/shell/Nav"
+import { SocialProvider } from "@/components/shell/SocialProvider"
 
 const BARE_PATHS = ["/login", "/auth/callback"]
 
@@ -19,7 +20,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <>
+    <SocialProvider>
       <style>{`
         .vec-main {
           padding-top: 52px;
@@ -41,7 +42,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <TopBar />
       <Nav />
       <main className="vec-main">{children}</main>
-    </>
+    </SocialProvider>
   )
 }
 
