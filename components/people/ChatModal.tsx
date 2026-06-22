@@ -12,19 +12,19 @@ import { colors, radii, fonts, fontSize, fontWeight } from "@/lib/design/tokens"
 export function ChatModal({
   person, onClose, onOpenSchedule,
 }: { person: ChatPerson; onClose: () => void; onOpenSchedule: () => void }) {
-  const { thread, append, loading } = useChat(person.id)
+  const { thread, append, loading, loaded } = useChat(person.id)
   const { profile } = useProfile()
   const [input, setInput] = useState("")
   const [busy, setBusy] = useState(false)
-  const [seeded, setSeeded] = useState(false)
+  const seeded = useRef(false)
   const endRef = useRef<HTMLDivElement>(null)
 
-  // Seed an opening line once if there is no prior history.
+  // Seed an opening line exactly once after the first successful load.
   useEffect(() => {
-    if (loading || seeded) return
-    setSeeded(true)
+    if (!loaded || seeded.current) return
+    seeded.current = true
     if (thread.length === 0) append({ sender: "them", body: openingLine(person) })
-  }, [loading, seeded, thread.length, person, append])
+  }, [loaded, thread.length, person, append])
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }) }, [thread, busy])
 

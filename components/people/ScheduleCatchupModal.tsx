@@ -80,7 +80,7 @@ export function ScheduleCatchupModal({ person, onClose }: { person: ChatPerson; 
           {existing && (
             <Button variant="danger" full onClick={() => { cancelCatchup(existing.id); onClose() }}>Cancel catchup</Button>
           )}
-          <Button variant="primary" full onClick={() => { addCatchup(person.id, day, start); onClose() }}>
+          <Button variant="primary" full onClick={() => { addCatchup(person.id, day, start, person.name); onClose() }}>
             {conflicts.length ? "Schedule anyway" : existing ? "Save changes" : "Schedule catchup"}
           </Button>
         </div>

@@ -8,13 +8,14 @@ create table if not exists public.connections (
 );
 
 create table if not exists public.catchups (
-  id         uuid primary key default gen_random_uuid(),
-  user_id    uuid not null references public.profiles(id) on delete cascade,
-  person_id  text not null,
-  day        int  not null,
-  start_min  int  not null,
-  end_min    int  not null,
-  created_at timestamptz not null default now()
+  id          uuid primary key default gen_random_uuid(),
+  user_id     uuid not null references public.profiles(id) on delete cascade,
+  person_id   text not null,
+  person_name text,
+  day         int  not null,
+  start_min   int  not null,
+  end_min     int  not null,
+  created_at  timestamptz not null default now()
 );
 
 create table if not exists public.chat_messages (

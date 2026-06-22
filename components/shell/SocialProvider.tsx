@@ -23,7 +23,7 @@ interface SocialApi {
   toggleConnection: (personId: string) => void
   catchups: CatchupRow[]
   cancelCatchup: (catchupId: string) => void
-  addCatchup: (personId: string, day: number, startMin: number) => void
+  addCatchup: (personId: string, day: number, startMin: number, personName?: string) => void
   openChat: (p: ChatPerson) => void
   openCatchup: (p: ChatPerson) => void
 }

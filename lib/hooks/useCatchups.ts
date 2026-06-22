@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client"
 export interface CatchupRow {
   id: string
   person_id: string
+  person_name?: string | null
   day: number
   start_min: number
   end_min: number
@@ -23,7 +24,7 @@ export function useCatchups() {
       if (!user) { setLoading(false); return }
       setUserId(user.id)
       const { data, error } = await supabase
-        .from("catchups").select("id, person_id, day, start_min, end_min").eq("user_id", user.id)
+        .from("catchups").select("id, person_id, person_name, day, start_min, end_min").eq("user_id", user.id)
       if (error) console.error("[useCatchups] fetch error:", error)
       if (data) setCatchups(data as CatchupRow[])
       setLoading(false)
@@ -32,7 +33,7 @@ export function useCatchups() {
   }, [])
 
   // One catchup per person: replace any existing one for that person.
-  const add = useCallback((personId: string, day: number, startMin: number) => {
+  const add = useCallback((personId: string, day: number, startMin: number, personName?: string) => {
     if (!userId) return
     const endMin = startMin + 15
     const supabase = createClient()
@@ -41,8 +42,8 @@ export function useCatchups() {
     supabase.from("catchups").delete().match({ user_id: userId, person_id: personId })
       .then(() =>
         supabase.from("catchups")
-          .insert({ user_id: userId, person_id: personId, day, start_min: startMin, end_min: endMin })
-          .select("id, person_id, day, start_min, end_min").single()
+          .insert({ user_id: userId, person_id: personId, person_name: personName ?? null, day, start_min: startMin, end_min: endMin })
+          .select("id, person_id, person_name, day, start_min, end_min").single()
           .then(({ data, error }) => {
             if (error || !data) { console.error("[useCatchups] add error:", error); return }
             setCatchups(prev => [...prev.filter(c => c.person_id !== personId), data as CatchupRow])

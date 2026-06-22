@@ -8,11 +8,13 @@ export interface ChatMsg { sender: "me" | "them"; body: string }
 export function useChat(personId: string | null) {
   const [thread, setThread] = useState<ChatMsg[]>([])
   const [loading, setLoading] = useState(false)
+  const [loaded, setLoaded] = useState(false)
   const [userId, setUserId] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!personId) { setThread([]); setLoading(false); return }
+    if (!personId) { setThread([]); setLoading(false); setLoaded(false); return }
     let cancelled = false
+    setLoaded(false)
     setLoading(true)
     const supabase = createClient()
     async function load() {
@@ -27,6 +29,7 @@ export function useChat(personId: string | null) {
       if (error) console.error("[useChat] fetch error:", error)
       setThread((data as ChatMsg[]) ?? [])
       setLoading(false)
+      setLoaded(true)
     }
     load()
     return () => { cancelled = true }
@@ -41,5 +44,5 @@ export function useChat(personId: string | null) {
     if (error) console.error("[useChat] insert error:", error)
   }, [userId, personId])
 
-  return { thread, append, loading }
+  return { thread, append, loading, loaded }
 }
