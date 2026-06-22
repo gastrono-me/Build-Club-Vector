@@ -73,23 +73,23 @@ const S = (o) => ({ id: `s${++_id}`, ...o });
 const SESSIONS = [
   // Day 1 — Jul 8
   S({ day: 0, start: hm(9),     end: hm(10),    type: "Keynote",  title: "AABW Opening Keynote", venue: "gem", by: "AABW Team", tags: ["Agents", "Keynote"], desc: "Kickoff, the week ahead, and how judging works." }),
-  S({ day: 0, start: hm(10),    end: hm(12),    type: "Workshop", title: "Render the Next Era of Creation with the BytePlus AI Stack", venue: "tbc", by: "BytePlus", tags: ["Agents", "Backend"], desc: "ByteDance's enterprise AI division on practical patterns for building AI products at scale, plus a path into the V-START Global Accelerator." }),
-  S({ day: 0, start: hm(12),    end: hm(14),    type: "Workshop", title: "The Full-Stack Advantage: Building Production-Ready AI Agents with Tencent Cloud", venue: "tasco", by: "Tencent Cloud", tags: ["Backend", "DevOps", "Agents"], desc: "Tencent Cloud's AI and Edge Stack — CodeBuddy, TokenHub, and EdgeOne Pages for production-grade agents." }),
-  S({ day: 0, start: hm(14),    end: hm(14,45), type: "Talk",     title: "Inside the NVIDIA Inception Program: How Startups Build & Scale AI Globally", venue: "tbc", by: "NVIDIA Inception", tags: ["Product", "Agents"], desc: "How AI startups can use NVIDIA Inception's compute access, capital, and investor connections to scale from prototype to production." }),
-  S({ day: 0, start: hm(15),    end: hm(16),    type: "Workshop", title: "TRAE in Your Professional Workflow", venue: "tbc", by: "TRAE", tags: ["Agents", "Product"], desc: "Practical approaches to integrating agentic AI into professional workflows, with workflow moves you can use the same night during the hackathon." }),
-  S({ day: 0, start: hm(16),    end: hm(18),    type: "Workshop", title: "OpenClaw Workshop: From Personal Automation to Business Workflows", venue: "tbc", by: "Build Stuffs", tags: ["Agents", "Backend", "Product"], desc: "Using OpenClaw to automate workflows, improve productivity, and create business value with AI agents." }),
+  S({ day: 0, start: hm(10),    end: hm(12),    type: "Workshop", title: "Render the Next Era of Creation with the BytePlus AI Stack", venue: "tbc", by: "BytePlus", tags: ["Agents", "Backend"], desc: "ByteDance's enterprise AI division on practical patterns for building AI products at scale, plus a path into the V-START Global Accelerator.", lumaUrl: "https://luma.com/gaf-vbkf" }),
+  S({ day: 0, start: hm(12),    end: hm(14),    type: "Workshop", title: "The Full-Stack Advantage: Building Production-Ready AI Agents with Tencent Cloud", venue: "tasco", by: "Tencent Cloud", tags: ["Backend", "DevOps", "Agents"], desc: "Tencent Cloud's AI and Edge Stack — CodeBuddy, TokenHub, and EdgeOne Pages for production-grade agents.", lumaUrl: "https://luma.com/tanuxv4i" }),
+  S({ day: 0, start: hm(14),    end: hm(14,45), type: "Talk",     title: "Inside the NVIDIA Inception Program: How Startups Build & Scale AI Globally", venue: "tbc", by: "NVIDIA Inception", tags: ["Product", "Agents"], desc: "How AI startups can use NVIDIA Inception's compute access, capital, and investor connections to scale from prototype to production.", lumaUrl: "https://luma.com/gaf-t4bs" }),
+  S({ day: 0, start: hm(15),    end: hm(16),    type: "Workshop", title: "TRAE in Your Professional Workflow", venue: "tbc", by: "TRAE", tags: ["Agents", "Product"], desc: "Practical approaches to integrating agentic AI into professional workflows, with workflow moves you can use the same night during the hackathon.", lumaUrl: "https://luma.com/gaf-jpy4" }),
+  S({ day: 0, start: hm(16),    end: hm(18),    type: "Workshop", title: "OpenClaw Workshop: From Personal Automation to Business Workflows", venue: "tbc", by: "Build Stuffs", tags: ["Agents", "Backend", "Product"], desc: "Using OpenClaw to automate workflows, improve productivity, and create business value with AI agents.", lumaUrl: "https://luma.com/bk5nav4f" }),
 
   // Day 2 — Jul 9
-  S({ day: 1, start: hm(9),     end: hm(10,30), type: "Workshop", title: "From Spec to Production Code — Kiro, Claude Code & Codex on AWS", venue: "awshcmc", by: "AWS", tags: ["Agents", "DevOps", "Backend"], desc: "Spec-driven development with Kiro and deploying Claude Code and Codex on Amazon Bedrock with governance, IAM, and audit logging built in." }),
-  S({ day: 1, start: hm(10,30), end: hm(12),    type: "Workshop", title: "Physical AI Party: Build Voice Agents with Agora ConvoAI", venue: "awshcmc", by: "Agora", tags: ["Agents", "Mobile"], desc: "Hands-on with AI voice agents on Agora's ConvoAI platform — speech, vision, and automation for real-world applications." }),
-  S({ day: 1, start: hm(13),    end: hm(14,30), type: "Workshop", title: "Production Multi-Agent AI on AWS — Bedrock AgentCore", venue: "awshcmc", by: "AWS", tags: ["Agents", "Backend", "DevOps"], desc: "Deploying multi-agent systems on AWS Bedrock AgentCore Runtime with memory management and orchestration using LangGraph or CrewAI." }),
-  S({ day: 1, start: hm(16,30), end: hm(18),    type: "Workshop", title: "Design Patterns & Best Practices — Testing, Monitoring & Production Readiness", venue: "awshcmc", by: "AWS", tags: ["DevOps", "ML", "Agents"], desc: "Production-ready practices for agentic AI: tool use, multi-agent orchestration, evaluation pipelines, and end-to-end tracing." }),
+  S({ day: 1, start: hm(9),     end: hm(10,30), type: "Workshop", title: "From Spec to Production Code — Kiro, Claude Code & Codex on AWS", venue: "awshcmc", by: "AWS", tags: ["Agents", "DevOps", "Backend"], desc: "Spec-driven development with Kiro and deploying Claude Code and Codex on Amazon Bedrock with governance, IAM, and audit logging built in.", lumaUrl: "https://luma.com/1mxdg4em" }),
+  S({ day: 1, start: hm(10,30), end: hm(12),    type: "Workshop", title: "Physical AI Party: Build Voice Agents with Agora ConvoAI", venue: "awshcmc", by: "Agora", tags: ["Agents", "Mobile"], desc: "Hands-on with AI voice agents on Agora's ConvoAI platform — speech, vision, and automation for real-world applications.", lumaUrl: "https://luma.com/3j43oewt" }),
+  S({ day: 1, start: hm(13),    end: hm(14,30), type: "Workshop", title: "Production Multi-Agent AI on AWS — Bedrock AgentCore", venue: "awshcmc", by: "AWS", tags: ["Agents", "Backend", "DevOps"], desc: "Deploying multi-agent systems on AWS Bedrock AgentCore Runtime with memory management and orchestration using LangGraph or CrewAI.", lumaUrl: "https://luma.com/lptsgwm6" }),
+  S({ day: 1, start: hm(16,30), end: hm(18),    type: "Workshop", title: "Design Patterns & Best Practices — Testing, Monitoring & Production Readiness", venue: "awshcmc", by: "AWS", tags: ["DevOps", "ML", "Agents"], desc: "Production-ready practices for agentic AI: tool use, multi-agent orchestration, evaluation pipelines, and end-to-end tracing.", lumaUrl: "https://luma.com/1nubtbgt" }),
 
   // Day 3 — Jul 10
-  S({ day: 2, start: hm(10),    end: hm(12),    type: "Workshop", title: "Build, Deploy & Monetize AI Agents: The Future of the Developer Economy", venue: "vng", by: "Apify", tags: ["Product", "Agents"], desc: "Practical tactics and patterns for turning agent projects into sustainable business models." }),
-  S({ day: 2, start: hm(12),    end: hm(14),    type: "Workshop", title: "LLM Observability & Evals with Langfuse", venue: "vng", by: "Langfuse", tags: ["DevOps", "LLMs", "ML"], desc: "Hands-on session on trace visibility, prompt versioning, monitoring layers, and evaluation experiments for LLM-powered apps." }),
-  S({ day: 2, start: hm(14),    end: hm(15),    type: "Talk",     title: "Beyond Autocomplete: How Agentic AI Solves the Enterprise Design Bottleneck", venue: "vng", by: "Google Developer Expert", tags: ["Design", "Product", "Agents"], desc: "Agentic AI that plans, executes, and self-corrects toward a result you can actually ship — case studies from Obello." }),
-  S({ day: 2, start: hm(15),    end: hm(16),    type: "Workshop", title: "Securing Agentic AI: From AI Security Fundamentals to Hands-on Agent Assessment", venue: "vng", by: "Antitech", tags: ["Agents", "DevOps"], desc: "Assessing agentic systems for prompt injection, memory poisoning, unsafe instruction following, data leakage, tool abuse, and policy bypass." }),
+  S({ day: 2, start: hm(10),    end: hm(12),    type: "Workshop", title: "Build, Deploy & Monetize AI Agents: The Future of the Developer Economy", venue: "vng", by: "Apify", tags: ["Product", "Agents"], desc: "Practical tactics and patterns for turning agent projects into sustainable business models.", lumaUrl: "https://luma.com/gaf-umu5" }),
+  S({ day: 2, start: hm(12),    end: hm(14),    type: "Workshop", title: "LLM Observability & Evals with Langfuse", venue: "vng", by: "Langfuse", tags: ["DevOps", "LLMs", "ML"], desc: "Hands-on session on trace visibility, prompt versioning, monitoring layers, and evaluation experiments for LLM-powered apps.", lumaUrl: "https://luma.com/8zn9khl4" }),
+  S({ day: 2, start: hm(14),    end: hm(15),    type: "Talk",     title: "Beyond Autocomplete: How Agentic AI Solves the Enterprise Design Bottleneck", venue: "vng", by: "Google Developer Expert", tags: ["Design", "Product", "Agents"], desc: "Agentic AI that plans, executes, and self-corrects toward a result you can actually ship — case studies from Obello.", lumaUrl: "https://luma.com/gaf-idob" }),
+  S({ day: 2, start: hm(15),    end: hm(16),    type: "Workshop", title: "Securing Agentic AI: From AI Security Fundamentals to Hands-on Agent Assessment", venue: "vng", by: "Antitech", tags: ["Agents", "DevOps"], desc: "Assessing agentic systems for prompt injection, memory poisoning, unsafe instruction following, data leakage, tool abuse, and policy bypass.", lumaUrl: "https://luma.com/7l5r8205" }),
   S({ day: 2, start: hm(19),    end: hm(22),    type: "Community",title: "Community Night", venue: "hive", by: "AABW", tags: ["Networking"], desc: "Food, music, and meet your future teammates." }),
 
   // Day 4 — Jul 11
@@ -509,15 +509,27 @@ function SessionCard({ s, added, onToggle, conflict, compact }) {
             <div style={{ fontFamily: FONT_DISPLAY, fontWeight: 600, fontSize: 16, color: C.ink, lineHeight: 1.25 }}>{s.title}</div>
             <div style={{ fontSize: 12.5, color: C.muted, marginTop: 2 }}>{s.by}</div>
           </div>
-          <button onClick={onToggle} title={added ? "Remove from schedule" : "Add to schedule"}
-            style={{
-              flexShrink: 0, width: 34, height: 34, borderRadius: 10, cursor: "pointer",
-              border: `1px solid ${added ? C.go : C.line}`,
-              background: added ? C.go : "#fff", color: added ? "#fff" : C.ink,
-              display: "flex", alignItems: "center", justifyContent: "center",
-            }}>
-            {added ? <Check size={17} /> : <Plus size={17} />}
-          </button>
+          <div style={{ flexShrink: 0, display: "flex", gap: 8 }}>
+            <button onClick={onToggle} title={added ? "Remove from schedule" : "Add to schedule"}
+              style={{
+                width: 34, height: 34, borderRadius: 10, cursor: "pointer",
+                border: `1px solid ${added ? C.go : C.line}`,
+                background: added ? C.go : "#fff", color: added ? "#fff" : C.ink,
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}>
+              {added ? <Check size={17} /> : <Plus size={17} />}
+            </button>
+            {s.lumaUrl && (
+              <a href={s.lumaUrl} target="_blank" rel="noopener noreferrer" title="Sign up on Luma"
+                style={{
+                  width: 34, height: 34, borderRadius: 10, cursor: "pointer",
+                  border: `1px solid ${C.line}`, background: "#fff",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}>
+                <img src="/luma-logo.png" alt="Luma" style={{ width: 18, height: 18, borderRadius: 4 }} />
+              </a>
+            )}
+          </div>
         </div>
         {!compact && <p style={{ fontSize: 13, color: C.muted, margin: "8px 0 0", lineHeight: 1.45 }}>{s.desc}</p>}
         <div style={{ display: "flex", flexWrap: "wrap", gap: 14, marginTop: 10, alignItems: "center" }}>
