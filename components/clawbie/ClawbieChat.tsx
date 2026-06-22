@@ -10,7 +10,7 @@ import { useSimClock } from "@/lib/hooks/useSimClock"
 import { useSavedSchedule } from "@/lib/hooks/useSavedSchedule"
 import { useProfile } from "@/lib/hooks/useProfile"
 import { useSocial } from "@/components/shell/SocialProvider"
-import { colors, radii, fonts, fontSize } from "@/lib/design/tokens"
+import { colors, radii, fontSize } from "@/lib/design/tokens"
 
 interface Msg { role: "user" | "assistant"; text: string }
 
