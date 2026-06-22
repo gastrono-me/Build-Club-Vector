@@ -5,16 +5,21 @@ import Link from "next/link"
 import { useEventData } from "@/lib/data/useEventData"
 import { useSimClock } from "@/lib/hooks/useSimClock"
 import { useSavedSchedule } from "@/lib/hooks/useSavedSchedule"
+import { useSocial } from "@/components/shell/SocialProvider"
 import { conflictIds } from "@/lib/schedule"
 import { SectionTitle } from "@/components/ui/SectionTitle"
 import { Tag } from "@/components/ui/Tag"
+import { Button } from "@/components/ui/Button"
 import { SessionCard } from "@/components/discover/SessionCard"
+import { Avatar } from "@/components/shell/Avatar"
+import { fmt } from "@/lib/time"
 import { colors, fonts, fontSize, fontWeight, letterSpacing, radii, spacing } from "@/lib/design/tokens"
 
 export function ScheduleView() {
-  const { sessions, days, venues } = useEventData()
+  const { sessions, days, venues, attendees } = useEventData()
   const { day: simDay, mins: simMins } = useSimClock()
   const { saved, toggle, loading } = useSavedSchedule()
+  const { catchups, cancelCatchup } = useSocial()
 
   // Filter to saved sessions only
   const savedSessions = sessions.filter(s => saved.has(s.id))
@@ -31,6 +36,10 @@ export function ScheduleView() {
   // Sort sessions within each day by start time
   for (const [, list] of byDay) {
     list.sort((a, b) => a.start - b.start)
+  }
+  // Merge catchups into the per-day groups as pseudo-items.
+  for (const c of catchups) {
+    if (!byDay.has(c.day)) byDay.set(c.day, [])
   }
   // Get sorted day indices
   const sortedDayIndices = Array.from(byDay.keys()).sort((a, b) => a - b)
@@ -72,7 +81,7 @@ export function ScheduleView() {
       )}
 
       {/* Empty state */}
-      {!loading && savedSessions.length === 0 && (
+      {!loading && savedSessions.length === 0 && catchups.length === 0 && (
         <div
           style={{
             textAlign: "center",
@@ -151,6 +160,20 @@ export function ScheduleView() {
                         <Tag tone="live">Clashes</Tag>
                       </div>
                     )}
+                  </div>
+                )
+              })}
+              {catchups.filter(c => c.day === dayIdx).sort((a, b) => a.start_min - b.start_min).map(c => {
+                const a = attendees.find(at => at.id === c.person_id)
+                return (
+                  <div key={c.id} style={{ display: "flex", gap: 12, alignItems: "center", background: colors.surface, border: `1.5px solid ${colors.line}`, borderRadius: radii.xl, padding: 16, marginBottom: spacing[3] }}>
+                    <Avatar name={a?.name ?? "Builder"} size={40} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontFamily: fonts.mono, fontSize: fontSize.label, color: colors.go, textTransform: "uppercase", letterSpacing: "0.06em" }}>1:1 Catchup</div>
+                      <div style={{ fontFamily: fonts.display, fontWeight: fontWeight.semibold, fontSize: fontSize.heading, color: colors.ink }}>{a?.name ?? "Builder"}</div>
+                      <div style={{ fontFamily: fonts.mono, fontSize: fontSize.meta, color: colors.ink, marginTop: 6 }}>{fmt(c.start_min)}–{fmt(c.end_min)}</div>
+                    </div>
+                    <Button variant="danger" size="sm" onClick={() => cancelCatchup(c.id)}>Cancel</Button>
                   </div>
                 )
               })}

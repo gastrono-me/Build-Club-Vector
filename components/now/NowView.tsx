@@ -3,11 +3,14 @@
 import React from "react"
 import { useSimClock } from "@/lib/hooks/useSimClock"
 import { useEventData } from "@/lib/data/useEventData"
+import { useProfile } from "@/lib/hooks/useProfile"
+import { useSavedSchedule } from "@/lib/hooks/useSavedSchedule"
 import { fmt } from "@/lib/time"
 import { Card } from "@/components/ui/Card"
 import { SectionTitle } from "@/components/ui/SectionTitle"
 import { Tag } from "@/components/ui/Tag"
-import { colors, fonts, fontSize, fontWeight, spacing } from "@/lib/design/tokens"
+import { Sparkles, Plus } from "lucide-react"
+import { colors, fonts, fontSize, fontWeight, radii, spacing } from "@/lib/design/tokens"
 import type { Session } from "@/types/index"
 
 const UP_NEXT_COUNT = 3
@@ -85,6 +88,13 @@ function SessionRow({ s, live }: { s: Session; live: boolean }) {
 export function NowView() {
   const { day, mins } = useSimClock()
   const { sessions, days } = useEventData()
+  const { profile } = useProfile()
+  const { saved, toggle } = useSavedSchedule()
+
+  const mySkills = new Set(profile?.skills ?? [])
+  const nudge = sessions
+    .filter(s => s.day === day && s.start > mins && !saved.has(s.id) && s.tags.some(t => mySkills.has(t)))
+    .sort((a, b) => a.start - b.start)[0]
 
   const todaySessions = sessions.filter((s) => s.day === day)
   const liveSessions = todaySessions.filter((s) => s.start <= mins && mins < s.end)
@@ -138,6 +148,18 @@ export function NowView() {
             <SessionRow key={s.id} s={s} live />
           ))}
         </section>
+      )}
+
+      {nudge && (
+        <div style={{ background: colors.violet, color: colors.onDark, borderRadius: radii["2xl"], padding: 18, marginBottom: 24, display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap" }}>
+          <div style={{ width: 38, height: 38, borderRadius: radii.md, background: "rgba(255,255,255,0.18)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Sparkles size={20} /></div>
+          <div style={{ flex: 1, minWidth: 200 }}>
+            <div style={{ fontFamily: fonts.mono, fontSize: fontSize.label, opacity: 0.8, letterSpacing: "0.06em" }}>MATCHES YOUR INTERESTS</div>
+            <div style={{ fontFamily: fonts.display, fontWeight: fontWeight.semibold, fontSize: fontSize.heading, marginTop: 3 }}>{nudge.title}</div>
+            <div style={{ fontSize: fontSize.meta, opacity: 0.9, marginTop: 2 }}>{fmt(nudge.start)} · {nudge.tags.filter(t => mySkills.has(t)).join(", ")}</div>
+          </div>
+          <button onClick={() => toggle(nudge.id)} style={{ background: colors.onDark, color: colors.violet, border: "none", borderRadius: radii.md, padding: "9px 14px", fontFamily: fonts.mono, fontWeight: fontWeight.semibold, fontSize: fontSize.meta, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}><Plus size={15} /> Add to schedule</button>
+        </div>
       )}
 
       {upNext.length > 0 && (

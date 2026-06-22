@@ -4,6 +4,7 @@ import React from "react"
 import { SectionTitle } from "@/components/ui/SectionTitle"
 import { Countdown } from "@/components/deadline/Countdown"
 import { Checklist } from "@/components/deadline/Checklist"
+import { DevpostLink } from "@/components/deadline/DevpostLink"
 import { ReadinessReview } from "@/components/deadline/ReadinessReview"
 import { colors, spacing } from "@/lib/design/tokens"
 
@@ -28,6 +29,7 @@ export default function DeadlinePage() {
         <SectionTitle kicker="deadline" title="Deadline Guardian" />
         <Countdown />
         <Checklist />
+        <DevpostLink />
         <ReadinessReview />
       </div>
     </div>

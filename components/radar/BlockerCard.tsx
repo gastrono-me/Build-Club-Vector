@@ -5,7 +5,9 @@ import { Card } from "@/components/ui/Card"
 import { Button } from "@/components/ui/Button"
 import { Tag } from "@/components/ui/Tag"
 import { Avatar } from "@/components/shell/Avatar"
-import { colors, fonts, fontSize, fontWeight, spacing, motion } from "@/lib/design/tokens"
+import { MessageCircle } from "lucide-react"
+import { useSocial } from "@/components/shell/SocialProvider"
+import { colors, fonts, fontSize, fontWeight, radii, spacing, motion } from "@/lib/design/tokens"
 import type { BlockerRow } from "@/lib/hooks/useRadar"
 
 interface BlockerCardProps {
@@ -36,6 +38,7 @@ export function BlockerCard({
   onMeToo,
 }: BlockerCardProps) {
   const [voting, setVoting] = React.useState(false)
+  const { openChat } = useSocial()
 
   const authorName = blocker.author_id == null
     ? "Community"
@@ -199,6 +202,14 @@ export function BlockerCard({
             <span aria-hidden style={{ fontSize: 13, lineHeight: 1 }}>💬</span>
             Talk
           </a>
+        )}
+
+        {blocker.author_id && !isOwn && (
+          <button onClick={() => openChat({ id: blocker.author_id!, name: blocker.author_name ?? "Attendee", avatar: blocker.author_avatar })}
+            title={`Message ${blocker.author_name ?? "attendee"}`} aria-label="Message author"
+            style={{ display: "inline-flex", alignItems: "center", gap: 5, border: `1.4px solid ${colors.line}`, background: colors.surface, color: colors.ink, borderRadius: radii.md, padding: "6px 10px", fontFamily: fonts.mono, fontSize: fontSize.label, cursor: "pointer" }}>
+            <MessageCircle size={13} /> Message
+          </button>
         )}
       </div>
     </Card>
