@@ -30,6 +30,6 @@ export const SESSIONS: Session[] = [
   S({ day: 3, start: hm(19,30), end: hm(23),    type: 'Community', title: 'AI Night',                            venue: 'gem',   by: 'AABW',              tags: ['Networking', 'Build'],          desc: 'Late-night building, snacks, and DJs.',                    lumaUrl: 'https://luma.com/aabw' }),
 
   // Day 5
-  S({ day: 4, start: hm(9,30),  end: hm(12),    type: 'Demo',      title: 'Demo Day -- Presentations',           venue: 'gem',   by: 'All teams',         tags: ['Product', 'Build'],             desc: 'Teams present to judges and the room.',                    lumaUrl: 'https://luma.com/aabw' }),
+  S({ day: 4, start: hm(9,30),  end: hm(12),    type: 'Demo',      title: 'Demo Day: Presentations',           venue: 'gem',   by: 'All teams',         tags: ['Product', 'Build'],             desc: 'Teams present to judges and the room.',                    lumaUrl: 'https://luma.com/aabw' }),
   S({ day: 4, start: hm(14),    end: hm(15,30), type: 'Demo',      title: 'Judging & Awards',                    venue: 'gem',   by: 'AABW Judges',       tags: ['Keynote'],                      desc: 'Scores, winners, and the Builder Experience Award.',       lumaUrl: 'https://luma.com/aabw' }),
 ]
