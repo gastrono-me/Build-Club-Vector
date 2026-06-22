@@ -127,8 +127,12 @@ describe('localReason', () => {
 })
 
 describe('openingLine', () => {
-  it('returns a non-empty opener mentioning the first tag when present', () => {
+  it('returns a non-empty opener', () => {
     const line = openingLine({ name: 'Mai Tran', tags: ['Frontend'], looking: ['Teammate'] })
     expect(line.length).toBeGreaterThan(0)
+  })
+  it('mentions the first tag when the tag branch is selected', () => {
+    const line = openingLine({ name: 'Ann', tags: ['Frontend'], looking: ['Teammate'] })
+    expect(line).toContain('Frontend')
   })
 })
