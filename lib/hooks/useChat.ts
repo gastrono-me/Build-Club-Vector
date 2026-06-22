@@ -11,7 +11,7 @@ export function useChat(personId: string | null) {
   const [userId, setUserId] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!personId) { setThread([]); return }
+    if (!personId) { setThread([]); setLoading(false); return }
     let cancelled = false
     setLoading(true)
     const supabase = createClient()
