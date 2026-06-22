@@ -29,3 +29,32 @@ export function conflictIds(items: ScheduleItem[]): Set<string> {
   }
   return conflicts
 }
+
+export interface AgendaItem extends ScheduleItem {
+  title: string
+  kind: 'session' | 'catchup'
+}
+
+/**
+ * Merge saved sessions and 1:1 catchups into a single titled agenda for
+ * conflict checks. Catchups expose start_min/end_min; map them to start/end.
+ * Ported from main App.jsx:264-273.
+ */
+export function buildAgenda(
+  sessions: AgendaItem[],
+  catchups: { id: string; person_id: string; day: number; start_min: number; end_min: number }[],
+  nameFor: (personId: string) => string,
+  excludeCatchupId?: string
+): AgendaItem[] {
+  const catchupItems: AgendaItem[] = catchups
+    .filter((c) => c.id !== excludeCatchupId)
+    .map((c) => ({
+      id: c.id,
+      day: c.day,
+      start: c.start_min,
+      end: c.end_min,
+      title: `Catchup with ${nameFor(c.person_id)}`,
+      kind: 'catchup',
+    }))
+  return [...sessions, ...catchupItems]
+}

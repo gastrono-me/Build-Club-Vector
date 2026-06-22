@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { overlaps, conflictIds } from '@/lib/schedule'
+import { overlaps, conflictIds, buildAgenda } from '@/lib/schedule'
 
 describe('schedule', () => {
   const a = { id: 's1', day: 0, start: 540, end: 600 }  // 9:00-10:00 day 0
@@ -32,5 +32,22 @@ describe('schedule', () => {
   it('conflictIds returns empty set when no conflicts', () => {
     const ids = conflictIds([a, e, d])
     expect(ids.size).toBe(0)
+  })
+})
+
+describe('buildAgenda', () => {
+  const sessions = [{ id: 's1', day: 1, start: 600, end: 660, title: 'Talk', kind: 'session' as const }]
+  const catchups = [{ id: 'c1', person_id: 'a1', day: 1, start_min: 630, end_min: 645 }]
+
+  it('merges sessions and catchups into one titled list', () => {
+    const out = buildAgenda(sessions, catchups, () => 'Mai Tran')
+    expect(out).toHaveLength(2)
+    expect(out.find(i => i.kind === 'catchup')?.title).toBe('Catchup with Mai Tran')
+    expect(out.find(i => i.kind === 'catchup')?.start).toBe(630)
+  })
+
+  it('excludes the catchup being edited', () => {
+    const out = buildAgenda(sessions, catchups, () => 'Mai Tran', 'c1')
+    expect(out.filter(i => i.kind === 'catchup')).toHaveLength(0)
   })
 })
