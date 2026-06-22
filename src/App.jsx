@@ -108,37 +108,15 @@ const INDUSTRIES = ["Fintech", "Healthcare", "Education", "Climate", "Web3", "Ga
 
 const LOOKING = ["Teammate", "Co-founder", "Mentor", "Mentee", "Just networking"];
 
-const ATTENDEES = [
-  { id: "a1", name: "Mai Tran", role: "Frontend Engineer", org: "Independent", tags: ["Frontend", "Design", "Agents"], industries: ["Consumer", "DevTools"], looking: ["Teammate"], bio: "React + design-systems. Want to build a slick agent UI.", handle: "@maibuilds" },
-  { id: "a2", name: "Daniel Okoro", role: "ML Engineer", org: "VectorWorks", tags: ["ML", "RAG", "Data"], industries: ["Fintech", "DevTools"], looking: ["Teammate"], bio: "Retrieval + evals. Looking for a frontend partner.", handle: "@danielml" },
-  { id: "a3", name: "Priya Nair", role: "Product Designer", org: "Freelance", tags: ["Design", "Product"], industries: ["Social Impact", "Consumer"], looking: ["Co-founder", "Teammate"], bio: "0→1 product design. Want a technical co-founder.", handle: "@priyadesigns" },
-  { id: "a4", name: "Quang Le", role: "Backend Engineer", org: "Saigon Devs", tags: ["Backend", "DevOps", "Agents"], industries: ["Enterprise", "DevTools"], looking: ["Teammate"], bio: "Go + infra. Can stand up anything serverless.", handle: "@quangle" },
-  { id: "a5", name: "Sara Bianchi", role: "Founder", org: "Stealth", tags: ["Product", "LLMs"], industries: ["Fintech", "Enterprise"], looking: ["Mentor", "Co-founder"], bio: "Non-technical founder, validating an agent idea.", handle: "@sarab" },
-  { id: "a6", name: "Tom Nguyen", role: "Staff Engineer", org: "Grab", tags: ["Backend", "DevOps", "ML"], industries: ["Enterprise", "DevTools"], looking: ["Mentee"], bio: "10y building at scale. Happy to mentor on infra & evals.", handle: "@tomn" },
-  { id: "a7", name: "Yuki Sato", role: "Mobile Engineer", org: "Indie", tags: ["Mobile", "Frontend"], industries: ["Consumer", "Gaming"], looking: ["Teammate"], bio: "Swift + RN. Want to ship an on-device agent.", handle: "@yukimobile" },
-  { id: "a8", name: "Ade Owusu", role: "Data Scientist", org: "Lagos AI", tags: ["Data", "ML", "RAG"], industries: ["Healthcare", "Climate"], looking: ["Teammate"], bio: "Pipelines + retrieval. Looking for product brains.", handle: "@adedata" },
-  { id: "a9", name: "Lena Kraus", role: "DevRel", org: "Cloudflare", tags: ["DevOps", "Backend"], industries: ["DevTools", "Enterprise"], looking: ["Just networking"], bio: "Here to help builders ship on the edge.", handle: "@lenadev" },
-  { id: "a10", name: "Hassan Ali", role: "Full-stack Dev", org: "Bootcamp grad", tags: ["Frontend", "Backend"], industries: ["Education", "Consumer"], looking: ["Mentor"], bio: "First hackathon. Eager to learn agent patterns.", handle: "@hassanbuilds" },
-  { id: "a11", name: "Chloe Park", role: "PM", org: "Kakao", tags: ["Product", "Design"], industries: ["Consumer", "Gaming"], looking: ["Co-founder", "Teammate"], bio: "Shipped consumer apps. Want a builder to start with.", handle: "@chloepm" },
-  { id: "a12", name: "Ravi Shah", role: "AI Engineer", org: "Independent", tags: ["Agents", "LLMs", "Backend"], industries: ["Fintech", "Enterprise"], looking: ["Teammate"], bio: "Multi-agent systems. Need design + product help.", handle: "@ravi_ai" },
-];
-
 let _cid = 0;
 const newCatchupId = () => `c${++_cid}`;
 
 /* ------------------------------------------------------------------ */
-/*  LINE mode mock data — live build-day blockers                      */
+/*  LINE mode — live build-day blockers                                */
 /* ------------------------------------------------------------------ */
 const BLOCKER_TAGS = ["Auth/Login", "Deploy/Infra", "RAG/Retrieval", "Agent loops", "Rate limits/Cost", "UI polish", "Demo prep", "Data/Eval"];
 
-const BLOCKER_POSTS = [
-  { id: "b1", personId: "a2", tag: "RAG/Retrieval", note: "Retrieval keeps surfacing irrelevant chunks — think my chunking strategy is off." },
-  { id: "b2", personId: "a4", tag: "Deploy/Infra", note: "Serverless function times out mid agent-loop. Need to trim latency somewhere." },
-  { id: "b3", personId: "a8", tag: "Data/Eval", note: "No idea how to score whether my agent's outputs are actually good before Demo Day." },
-  { id: "b4", personId: "a12", tag: "Agent loops", note: "Multi-agent handoff keeps looping — one agent won't stop delegating back." },
-  { id: "b5", personId: "a7", tag: "Demo prep", note: "3-minute pitch is still 6 minutes of jargon. Need to cut it down hard." },
-  { id: "b6", personId: "a1", tag: "UI polish", note: "Out of time to make the UI look finished before judging starts." },
-];
+const BLOCKER_POSTS = [];
 
 /* ------------------------------------------------------------------ */
 /*  Logic helpers                                                      */
@@ -652,7 +630,7 @@ export default function App() {
     fetchRealUsers().then(setRealUsers).catch(() => {});
   }, [authStatus, tab]);
 
-  const directory = useMemo(() => [...ATTENDEES, ...realUsers.map(realUserToPerson)], [realUsers]);
+  const directory = useMemo(() => realUsers.map(realUserToPerson), [realUsers]);
   const attendeesById = useMemo(() => Object.fromEntries(directory.map((a) => [a.id, a])), [directory]);
 
   // simulated event clock — defaults into Day 2 mid-morning so "Now" is alive
@@ -885,7 +863,7 @@ export default function App() {
             <ScheduleView schedule={schedule} toggle={toggle} setTab={setTab} catchups={catchups}
               attendeesById={attendeesById} onCancelCatchup={cancelCatchupById} onMessage={openChat} />
           )}
-          {tab === "copilot" && <CopilotView me={me} schedule={schedule} sim={sim} toggle={toggle} catchups={catchups} attendeesById={attendeesById} />}
+          {tab === "copilot" && <CopilotView me={me} schedule={schedule} sim={sim} toggle={toggle} catchups={catchups} attendeesById={attendeesById} people={directory} />}
           {tab === "deadline" && <DeadlineGuardianView sim={sim} />}
           {tab === "radar" && <BottleneckRadarView me={me} attendeesById={attendeesById} onMessage={openChat} />}
           {tab === "pitch" && <PitchCoachView />}
@@ -1462,7 +1440,7 @@ function PeopleView({ me, connections, connect, catchups, onMessage, onSchedule,
   const [selected, setSelected] = useState(null);
   const [showMe, setShowMe] = useState(false);
   const you = useMemo(() => meAsPerson(me), [me]);
-  const all = people || ATTENDEES;
+  const all = people || [];
 
   let list = all
     .filter((p) => look === "all" || (p.looking || []).includes(look))
@@ -1626,7 +1604,7 @@ function ScheduleView({ schedule, toggle, setTab, catchups, attendeesById, onCan
 /* ------------------------------------------------------------------ */
 /*  COPILOT view — AI does real work over the event data               */
 /* ------------------------------------------------------------------ */
-function CopilotView({ me, schedule, sim, toggle, catchups, attendeesById }) {
+function CopilotView({ me, schedule, sim, toggle, catchups, attendeesById, people }) {
   const [msgs, setMsgs] = useState([
     { role: "assistant", text: `Hi ${me.name === "You" ? "there" : me.name.split(" ")[0]} — I can see the full programme, the people here, and your schedule. Ask me what's on now, what to do with a free hour, or who to meet.` },
   ]);
@@ -1646,7 +1624,7 @@ function CopilotView({ me, schedule, sim, toggle, catchups, attendeesById }) {
       myCatchups: catchups.map((c) => ({ with: attendeesById[c.personId]?.name, day: DAYS[c.day].date, time: `${fmt(c.start)}-${fmt(c.end)}` })),
       myProfile: { tags: me.tags, looking: me.looking, industries: me.industries },
       programme: SESSIONS.map((s) => ({ title: s.title, type: s.type, day: DAYS[s.day].date, time: `${fmt(s.start)}-${fmt(s.end)}`, venue: `${VENUES[s.venue].name} (${VENUES[s.venue].area})`, tags: s.tags, by: s.by })),
-      people: ATTENDEES.map((p) => ({ name: p.name, role: p.role, tags: p.tags, industries: p.industries, looking: p.looking })),
+      people: people.map((p) => ({ name: p.name, role: p.role, tags: p.tags, industries: p.industries, looking: p.looking })),
     });
   }
 
@@ -1665,7 +1643,8 @@ function CopilotView({ me, schedule, sim, toggle, catchups, attendeesById }) {
         : `Nothing's running at ${fmt(sim.mins)}.${next ? ` Next up is ${next.title} at ${fmt(next.start)}, ${VENUES[next.venue].name}.` : " That's a wrap for today."}`;
     }
     if (t.includes("meet") || t.includes("who")) {
-      const top = [...ATTENDEES].sort((a, b) => matchScore(me, b).score - matchScore(me, a).score).slice(0, 3);
+      if (!people.length) return "No one else has joined Vector yet — once other builders sign in, I can match you up by tags and interests.";
+      const top = [...people].sort((a, b) => matchScore(me, b).score - matchScore(me, a).score).slice(0, 3);
       return `Based on your tags (${(me.tags || []).join(", ")}), start with: ${top.map((p) => `${p.name} (${p.tags.filter(x => (me.tags||[]).includes(x)).join("/") || p.role}, ${(p.looking||[]).join("/")})`).join("; ")}. Head to the People tab to message or schedule a catchup.`;
     }
     const mine = new Set(me.tags || []);
