@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
+import * as Ably from "ably";
 import {
   Activity, Radio, CalendarDays, Users, Sparkles, MapPin, Clock,
   Plus, Check, X, Send, AlertTriangle, ArrowRight, Search, Filter,
-  Handshake, Star, Loader2, Camera, MessageCircle, Navigation, Flame, Lock, Radar, Mic, Map
+  Handshake, Star, Loader2, Camera, MessageCircle, Navigation, Flame, Lock, Radar, Mic, Map, LogOut, Pencil, ExternalLink
 } from "lucide-react";
 
 /* ------------------------------------------------------------------ */
@@ -31,20 +32,22 @@ const FONT_MONO = "'JetBrains Mono', ui-monospace, monospace";
 /*  Mock event data — AABW, Ho Chi Minh City, Jul 8–12                 */
 /* ------------------------------------------------------------------ */
 const VENUES = {
-  gem:   { name: "GEM Center", area: "District 1", main: true },
-  dream: { name: "Dreamplex", area: "District 1" },
-  sihub: { name: "Saigon Innovation Hub", area: "District 3" },
-  rmit:  { name: "RMIT Saigon South", area: "District 7" },
-  hive:  { name: "The Hive Thao Dien", area: "District 2" },
+  gem:     { name: "GEM Center", area: "District 1", main: true },
+  tbc:     { name: "Venue TBC", area: "District 1" },
+  awshcmc: { name: "AWS HCMC Office", area: "District 1" },
+  hive:    { name: "The Hive Thao Dien", area: "District 2" },
+  tasco:   { name: "Tasco", area: "District 3" },
+  vng:     { name: "VNG Campus", area: "District 7" },
 };
 
 // fixed pin positions for the illustrative city map (Maps tab)
 const VENUE_MAP_POS = {
-  sihub: { x: 130, y: 90 },
-  gem:   { x: 260, y: 255 },
-  dream: { x: 190, y: 210 },
-  hive:  { x: 530, y: 190 },
-  rmit:  { x: 260, y: 400 },
+  tasco:   { x: 130, y: 90 },
+  gem:     { x: 260, y: 255 },
+  tbc:     { x: 190, y: 210 },
+  hive:    { x: 530, y: 190 },
+  awshcmc: { x: 310, y: 300 },
+  vng:     { x: 260, y: 400 },
 };
 
 const DAYS = [
@@ -68,31 +71,33 @@ let _id = 0;
 const S = (o) => ({ id: `s${++_id}`, ...o });
 
 const SESSIONS = [
-  // Day 1
+  // Day 1 — Jul 8
   S({ day: 0, start: hm(9),     end: hm(10),    type: "Keynote",  title: "AABW Opening Keynote", venue: "gem", by: "AABW Team", tags: ["Agents", "Keynote"], desc: "Kickoff, the week ahead, and how judging works." }),
-  S({ day: 0, start: hm(10,30), end: hm(12),    type: "Workshop", title: "Agent Foundations: Tool Use & Loops", venue: "gem", by: "Anthropic", tags: ["Agents", "LLMs"], desc: "Build a tool-using agent loop from scratch." }),
-  S({ day: 0, start: hm(13,30), end: hm(15),    type: "Workshop", title: "Vector Search & RAG in an Hour", venue: "dream", by: "PineCone", tags: ["RAG", "Data", "Backend"], desc: "Stand up retrieval over your own docs." }),
-  S({ day: 0, start: hm(15,30), end: hm(17),    type: "Talk",     title: "Designing for Trust in AI Products", venue: "sihub", by: "Figma", tags: ["Design", "Product"], desc: "UX patterns for agentic interfaces." }),
+  S({ day: 0, start: hm(10),    end: hm(12),    type: "Workshop", title: "Render the Next Era of Creation with the BytePlus AI Stack", venue: "tbc", by: "BytePlus", tags: ["Agents", "Backend"], desc: "ByteDance's enterprise AI division on practical patterns for building AI products at scale, plus a path into the V-START Global Accelerator." }),
+  S({ day: 0, start: hm(12),    end: hm(14),    type: "Workshop", title: "The Full-Stack Advantage: Building Production-Ready AI Agents with Tencent Cloud", venue: "tasco", by: "Tencent Cloud", tags: ["Backend", "DevOps", "Agents"], desc: "Tencent Cloud's AI and Edge Stack — CodeBuddy, TokenHub, and EdgeOne Pages for production-grade agents." }),
+  S({ day: 0, start: hm(14),    end: hm(14,45), type: "Talk",     title: "Inside the NVIDIA Inception Program: How Startups Build & Scale AI Globally", venue: "tbc", by: "NVIDIA Inception", tags: ["Product", "Agents"], desc: "How AI startups can use NVIDIA Inception's compute access, capital, and investor connections to scale from prototype to production." }),
+  S({ day: 0, start: hm(15),    end: hm(16),    type: "Workshop", title: "TRAE in Your Professional Workflow", venue: "tbc", by: "TRAE", tags: ["Agents", "Product"], desc: "Practical approaches to integrating agentic AI into professional workflows, with workflow moves you can use the same night during the hackathon." }),
+  S({ day: 0, start: hm(16),    end: hm(18),    type: "Workshop", title: "OpenClaw Workshop: From Personal Automation to Business Workflows", venue: "tbc", by: "Build Stuffs", tags: ["Agents", "Backend", "Product"], desc: "Using OpenClaw to automate workflows, improve productivity, and create business value with AI agents." }),
 
-  // Day 2
-  S({ day: 1, start: hm(9,30),  end: hm(11),    type: "Workshop", title: "Serverless Agents on the Edge", venue: "gem", by: "Cloudflare", tags: ["Backend", "DevOps", "Agents"], desc: "Deploy agents close to your users." }),
-  S({ day: 1, start: hm(11,30), end: hm(13),    type: "Workshop", title: "Fine-tuning vs Prompting: When & How", venue: "rmit", by: "Hugging Face", tags: ["ML", "LLMs"], desc: "Practical decision framework + a hands-on run." }),
-  S({ day: 1, start: hm(14),    end: hm(15,30), type: "Workshop", title: "Observability for LLM Apps", venue: "dream", by: "LangSmith", tags: ["DevOps", "LLMs", "Backend"], desc: "Trace, evaluate, and debug agent runs." }),
-  S({ day: 1, start: hm(16),    end: hm(17,30), type: "Talk",     title: "Shipping Mobile AI Features", venue: "hive", by: "Expo", tags: ["Mobile", "Product"], desc: "On-device + cloud patterns for mobile builders." }),
+  // Day 2 — Jul 9
+  S({ day: 1, start: hm(9),     end: hm(10,30), type: "Workshop", title: "From Spec to Production Code — Kiro, Claude Code & Codex on AWS", venue: "awshcmc", by: "AWS", tags: ["Agents", "DevOps", "Backend"], desc: "Spec-driven development with Kiro and deploying Claude Code and Codex on Amazon Bedrock with governance, IAM, and audit logging built in." }),
+  S({ day: 1, start: hm(10,30), end: hm(12),    type: "Workshop", title: "Physical AI Party: Build Voice Agents with Agora ConvoAI", venue: "awshcmc", by: "Agora", tags: ["Agents", "Mobile"], desc: "Hands-on with AI voice agents on Agora's ConvoAI platform — speech, vision, and automation for real-world applications." }),
+  S({ day: 1, start: hm(13),    end: hm(14,30), type: "Workshop", title: "Production Multi-Agent AI on AWS — Bedrock AgentCore", venue: "awshcmc", by: "AWS", tags: ["Agents", "Backend", "DevOps"], desc: "Deploying multi-agent systems on AWS Bedrock AgentCore Runtime with memory management and orchestration using LangGraph or CrewAI." }),
+  S({ day: 1, start: hm(16,30), end: hm(18),    type: "Workshop", title: "Design Patterns & Best Practices — Testing, Monitoring & Production Readiness", venue: "awshcmc", by: "AWS", tags: ["DevOps", "ML", "Agents"], desc: "Production-ready practices for agentic AI: tool use, multi-agent orchestration, evaluation pipelines, and end-to-end tracing." }),
 
-  // Day 3
-  S({ day: 2, start: hm(10),    end: hm(11,30), type: "Workshop", title: "Multi-Agent Orchestration", venue: "gem", by: "CrewAI", tags: ["Agents", "Backend"], desc: "Coordinating specialist agents on a task." }),
-  S({ day: 2, start: hm(12),    end: hm(13,30), type: "Workshop", title: "Voice Agents End-to-End", venue: "sihub", by: "ElevenLabs", tags: ["Agents", "Frontend"], desc: "Speech-in, speech-out, low latency." }),
-  S({ day: 2, start: hm(14,30), end: hm(16),    type: "Talk",     title: "From Demo to Product: What Judges Look For", venue: "gem", by: "AABW Judges", tags: ["Product", "Keynote"], desc: "How to make your Demo Day pitch land." }),
+  // Day 3 — Jul 10
+  S({ day: 2, start: hm(10),    end: hm(12),    type: "Workshop", title: "Build, Deploy & Monetize AI Agents: The Future of the Developer Economy", venue: "vng", by: "Apify", tags: ["Product", "Agents"], desc: "Practical tactics and patterns for turning agent projects into sustainable business models." }),
+  S({ day: 2, start: hm(12),    end: hm(14),    type: "Workshop", title: "LLM Observability & Evals with Langfuse", venue: "vng", by: "Langfuse", tags: ["DevOps", "LLMs", "ML"], desc: "Hands-on session on trace visibility, prompt versioning, monitoring layers, and evaluation experiments for LLM-powered apps." }),
+  S({ day: 2, start: hm(14),    end: hm(15),    type: "Talk",     title: "Beyond Autocomplete: How Agentic AI Solves the Enterprise Design Bottleneck", venue: "vng", by: "Google Developer Expert", tags: ["Design", "Product", "Agents"], desc: "Agentic AI that plans, executes, and self-corrects toward a result you can actually ship — case studies from Obello." }),
+  S({ day: 2, start: hm(15),    end: hm(16),    type: "Workshop", title: "Securing Agentic AI: From AI Security Fundamentals to Hands-on Agent Assessment", venue: "vng", by: "Antitech", tags: ["Agents", "DevOps"], desc: "Assessing agentic systems for prompt injection, memory poisoning, unsafe instruction following, data leakage, tool abuse, and policy bypass." }),
   S({ day: 2, start: hm(19),    end: hm(22),    type: "Community",title: "Community Night", venue: "hive", by: "AABW", tags: ["Networking"], desc: "Food, music, and meet your future teammates." }),
 
-  // Day 4
+  // Day 4 — Jul 11
   S({ day: 3, start: hm(9),     end: hm(12,30), type: "Hack",     title: "Heads-down Build Block", venue: "gem", by: "Mentors on-site", tags: ["Agents", "Build"], desc: "Open building. Roaming mentors available." }),
-  S({ day: 3, start: hm(13,30), end: hm(15),    type: "Workshop", title: "Evals That Actually Catch Regressions", venue: "gem", by: "Braintrust", tags: ["DevOps", "ML"], desc: "Write evals before you ship." }),
   S({ day: 3, start: hm(15,30), end: hm(17),    type: "Talk",     title: "Pitching Your Agent in 3 Minutes", venue: "gem", by: "AABW Team", tags: ["Product"], desc: "Structure, story, and the live demo." }),
   S({ day: 3, start: hm(19,30), end: hm(23),    type: "Community",title: "AI Night", venue: "gem", by: "AABW", tags: ["Networking", "Build"], desc: "Late-night building, snacks, and DJs." }),
 
-  // Day 5
+  // Day 5 — Jul 12
   S({ day: 4, start: hm(9,30),  end: hm(12),    type: "Demo",     title: "Demo Day — Presentations", venue: "gem", by: "All teams", tags: ["Product", "Build"], desc: "Teams present to judges and the room." }),
   S({ day: 4, start: hm(14),    end: hm(15,30), type: "Demo",     title: "Judging & Awards", venue: "gem", by: "AABW Judges", tags: ["Keynote"], desc: "Scores, winners, and the Builder Experience Award." }),
 ];
@@ -209,6 +214,136 @@ function localPitchFeedback(text) {
   const words = text.trim().split(/\s+/).filter(Boolean).length;
   const minutes = (words / 130).toFixed(1);
   return `Roughly ${words} words — at a natural speaking pace that's about ${minutes} minutes aloud (target is 3).\n\nMake sure you hit, in order: the problem in one sentence, who actually has it, what you built, and a moment that shows it working live.\n\nLikely judge questions: "What happens when the AI call fails?" and "Why does this need AI at all, versus a simple form or lookup?"`;
+}
+
+/* ---- Auth + persisted profile ---- */
+async function fetchMe() {
+  const res = await fetch("/api/me");
+  if (res.status === 401) return null;
+  if (!res.ok) throw new Error("me");
+  return res.json();
+}
+
+async function loginWithGoogle(idToken) {
+  const res = await fetch("/api/auth", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ idToken }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.error || "auth");
+  }
+  return res.json();
+}
+
+async function logoutSession() {
+  await fetch("/api/logout", { method: "POST" });
+}
+
+async function saveProfileRemote(profile) {
+  await fetch("/api/profile", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(profile),
+  });
+}
+
+/* ---- Real chat (real users, real-time via Ably) ---- */
+async function fetchRealUsers() {
+  const res = await fetch("/api/users");
+  if (!res.ok) throw new Error("users");
+  const { users } = await res.json();
+  return users;
+}
+
+function realUserToPerson(u) {
+  return {
+    id: u.sub, sub: u.sub, isReal: true,
+    name: u.name || "Someone", role: u.occupation || "", org: u.company || "",
+    bio: "", tags: u.tags || [], industries: u.industries || [], looking: u.looking || [],
+    photo: u.photo || null, handle: "@" + (u.name || "user").toLowerCase().replace(/\s+/g, ""),
+    linkedin: u.linkedin, instagram: u.instagram, twitter: u.twitter,
+  };
+}
+
+async function fetchChatHistory(withSub) {
+  const res = await fetch(`/api/messages?with=${encodeURIComponent(withSub)}`);
+  if (!res.ok) throw new Error("messages");
+  const { messages } = await res.json();
+  return messages;
+}
+
+async function sendRealMessage(toSub, text) {
+  const res = await fetch("/api/messages", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ to: toSub, text }),
+  });
+  if (!res.ok) throw new Error("send");
+  return (await res.json()).message;
+}
+
+async function fetchAblyTokenFor(withSub) {
+  const res = await fetch("/api/ably-token", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ with: withSub }),
+  });
+  if (!res.ok) throw new Error("ably-token");
+  return res.json();
+}
+
+function LoginScreen({ onLogin }) {
+  const btnRef = useRef(null);
+  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!clientId) return;
+    async function handleCredential(response) {
+      try {
+        const data = await loginWithGoogle(response.credential);
+        onLogin(data);
+      } catch (err) {
+        setError(`Couldn't sign you in: ${err.message}`);
+      }
+    }
+
+    function init() {
+      if (!window.google || !btnRef.current) return;
+      window.google.accounts.id.initialize({ client_id: clientId, callback: handleCredential });
+      window.google.accounts.id.renderButton(btnRef.current, { theme: "outline", size: "large", shape: "pill", width: 280 });
+    }
+
+    if (window.google) {
+      init();
+    } else {
+      const script = document.createElement("script");
+      script.src = "https://accounts.google.com/gsi/client";
+      script.async = true;
+      script.onload = init;
+      document.head.appendChild(script);
+    }
+  }, [clientId]);
+
+  return (
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: C.surface, padding: 20 }}>
+      <div style={{ background: C.panel, borderRadius: 20, padding: 36, maxWidth: 380, width: "100%", textAlign: "center", boxShadow: "0 8px 30px rgba(22,19,31,.08)" }}>
+        <div style={{ width: 48, height: 48, borderRadius: 13, background: C.ink, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+          <Navigation size={24} color="#fff" />
+        </div>
+        <h1 style={{ fontFamily: FONT_DISPLAY, fontWeight: 700, fontSize: 22, margin: 0 }}>Welcome to Vector</h1>
+        <p style={{ color: C.muted, fontSize: 13.5, margin: "8px 0 24px" }}>Sign in to get matched, save your schedule, and pick up where you left off on any device.</p>
+        {clientId ? (
+          <div style={{ display: "flex", justifyContent: "center" }} ref={btnRef} />
+        ) : (
+          <div style={{ fontSize: 12.5, color: C.live }}>Google sign-in isn't configured yet — set VITE_GOOGLE_CLIENT_ID.</div>
+        )}
+        {error && <div style={{ marginTop: 12, fontSize: 12.5, color: C.live }}>{error}</div>}
+      </div>
+    </div>
+  );
 }
 
 /* ---- Claude API (graceful fallback if unavailable) ---- */
@@ -442,12 +577,16 @@ function CatchupCard({ c, person, onCancel, onMessage, conflict, compact }) {
 /*  Main app                                                           */
 /* ------------------------------------------------------------------ */
 export default function App() {
+  const [authStatus, setAuthStatus] = useState("loading"); // "loading" | "anon" | "in"
+  const [googleUser, setGoogleUser] = useState(null);
+  const hydrated = useRef(false);
+
   const [tab, setTab] = useState("now");
   const [mode, setMode] = useState("pulse"); // "pulse" (networking/discovery) or "line" (lock-in build mode)
-  const [schedule, setSchedule] = useState(new Set(["s2", "s9"]));
+  const [schedule, setSchedule] = useState(new Set());
   const [connections, setConnections] = useState(new Set());
-  const [me, setMe] = useState({ name: "You", tags: ["Agents", "Frontend"], industries: [], looking: ["Teammate"], photo: null });
-  const [setupOpen, setSetupOpen] = useState(true);
+  const [me, setMe] = useState({ name: "You", tags: [], industries: [], looking: ["Teammate"], photo: null });
+  const [setupOpen, setSetupOpen] = useState(false);
 
   const [catchups, setCatchups] = useState([]); // { id, personId, day, start, end }
   const [chats, setChats] = useState({});       // personId -> [{ from: 'me'|'them', text }]
@@ -455,7 +594,54 @@ export default function App() {
   const [chatBusy, setChatBusy] = useState(false);
   const [schedulingWith, setSchedulingWith] = useState(null);
 
-  const attendeesById = useMemo(() => Object.fromEntries(ATTENDEES.map((a) => [a.id, a])), []);
+  const [realUsers, setRealUsers] = useState([]);
+  const [realChatWith, setRealChatWith] = useState(null);
+  const [realChatThread, setRealChatThread] = useState([]);
+  const [realChatLoading, setRealChatLoading] = useState(false);
+
+  function applySession({ user, profile, isNew }) {
+    setGoogleUser(user);
+    setMe(profile.me || { name: user.name || "You", tags: [], industries: [], looking: ["Teammate"], photo: user.picture || null });
+    setSchedule(new Set(profile.schedule || []));
+    setConnections(new Set(profile.connections || []));
+    setCatchups(profile.catchups || []);
+    setChats(profile.chats || {});
+    setSetupOpen(isNew);
+    hydrated.current = false; // skip the next persist effect run — we just loaded this data
+    setAuthStatus("in");
+  }
+
+  function logout() {
+    logoutSession();
+    setGoogleUser(null);
+    setAuthStatus("anon");
+    setSetupOpen(false);
+  }
+
+  // on first mount, check for an existing session
+  useEffect(() => {
+    fetchMe()
+      .then((data) => (data ? applySession(data) : setAuthStatus("anon")))
+      .catch(() => setAuthStatus("anon"));
+  }, []);
+
+  // persist profile changes to the server, debounced
+  useEffect(() => {
+    if (authStatus !== "in") return;
+    if (!hydrated.current) { hydrated.current = true; return; }
+    const t = setTimeout(() => {
+      saveProfileRemote({ me, schedule: [...schedule], connections: [...connections], catchups, chats });
+    }, 800);
+    return () => clearTimeout(t);
+  }, [authStatus, me, schedule, connections, catchups, chats]);
+
+  useEffect(() => {
+    if (authStatus !== "in") return;
+    fetchRealUsers().then(setRealUsers).catch(() => {});
+  }, [authStatus, tab]);
+
+  const directory = useMemo(() => [...ATTENDEES, ...realUsers.map(realUserToPerson)], [realUsers]);
+  const attendeesById = useMemo(() => Object.fromEntries(directory.map((a) => [a.id, a])), [directory]);
 
   // simulated event clock — defaults into Day 2 mid-morning so "Now" is alive
   const [sim, setSim] = useState({ day: 1, mins: hm(10, 15) });
@@ -474,12 +660,61 @@ export default function App() {
     });
 
   function openChat(personId) {
+    const person = attendeesById[personId];
+    if (person?.isReal) {
+      openRealChat(person.sub);
+      return;
+    }
     setChats((prev) => {
       if (prev[personId]) return prev;
       return { ...prev, [personId]: [{ from: "them", text: openingLine(attendeesById[personId]) }] };
     });
     setChatWith(personId);
   }
+
+  function openRealChat(sub) {
+    setRealChatThread([]);
+    setRealChatLoading(true);
+    setRealChatWith(sub);
+    fetchChatHistory(sub)
+      .then((history) => {
+        setRealChatThread(history.map((m) => ({ from: m.from === googleUser?.sub ? "me" : "them", text: m.text })));
+      })
+      .catch(() => {})
+      .finally(() => setRealChatLoading(false));
+  }
+
+  async function sendRealChatMessage(text) {
+    setRealChatThread((prev) => [...prev, { from: "me", text }]);
+    try {
+      await sendRealMessage(realChatWith, text);
+    } catch {}
+  }
+
+  // live delivery for the currently-open real chat
+  useEffect(() => {
+    if (!realChatWith || !googleUser?.sub) return;
+    let client, channel;
+    let cancelled = false;
+    (async () => {
+      try {
+        const tokenRequest = await fetchAblyTokenFor(realChatWith);
+        if (cancelled) return;
+        client = new Ably.Realtime({ authCallback: (_, cb) => cb(null, tokenRequest) });
+        const channelName = `chat:${[googleUser.sub, realChatWith].sort().join(":")}`;
+        channel = client.channels.get(channelName);
+        channel.subscribe("message", (msg) => {
+          if (msg.data.from === googleUser.sub) return;
+          setRealChatThread((prev) => [...prev, { from: "them", text: msg.data.text }]);
+        });
+      } catch {}
+    })();
+    return () => {
+      cancelled = true;
+      channel?.unsubscribe();
+      client?.close();
+    };
+  }, [realChatWith, googleUser?.sub]);
 
   async function sendMessage(personId, text) {
     const person = attendeesById[personId];
@@ -534,6 +769,17 @@ export default function App() {
   ];
   const NAV = mode === "pulse" ? PULSE_NAV : LINE_NAV;
 
+  if (authStatus === "loading") {
+    return (
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: C.surface }}>
+        <Loader2 size={22} color={C.muted} style={{ animation: "spin 1s linear infinite" }} />
+      </div>
+    );
+  }
+  if (authStatus === "anon") {
+    return <LoginScreen onLogin={applySession} />;
+  }
+
   return (
     <div style={{ fontFamily: FONT_BODY, background: C.surface, color: C.ink, minHeight: "100vh" }}>
       <style>{`
@@ -579,11 +825,18 @@ export default function App() {
 
         <SimClock sim={sim} setSim={setSim} />
 
+        <button onClick={logout} title="Log out" style={{
+          display: "flex", alignItems: "center", justifyContent: "center", width: 30, height: 30,
+          background: "#fff", border: `1px solid ${C.line}`, borderRadius: 999, cursor: "pointer", color: C.muted,
+        }}>
+          <LogOut size={14} />
+        </button>
+
         <button onClick={() => setSetupOpen(true)} style={{
           display: "flex", alignItems: "center", gap: 8, background: "#fff",
           border: `1px solid ${C.line}`, borderRadius: 999, padding: "5px 10px 5px 5px", cursor: "pointer",
         }}>
-          <Avatar name={me.name} photo={me.photo} size={28} />
+          <Avatar name={me.name} photo={me.photo || googleUser?.picture} size={28} />
           <span style={{ fontSize: 13, fontWeight: 600 }}>{me.name}</span>
         </button>
       </header>
@@ -613,8 +866,8 @@ export default function App() {
           {tab === "discover" && <DiscoverView schedule={schedule} toggle={toggle} />}
           {tab === "maps" && <MapsView />}
           {tab === "people" && (
-            <PeopleView me={me} connections={connections} connect={connect} catchups={catchups}
-              onMessage={openChat} onSchedule={(id) => setSchedulingWith(id)} />
+            <PeopleView me={me} connections={connections} connect={connect} catchups={catchups} people={directory}
+              onMessage={openChat} onSchedule={(id) => setSchedulingWith(id)} onEditProfile={() => setSetupOpen(true)} />
           )}
           {tab === "schedule" && (
             <ScheduleView schedule={schedule} toggle={toggle} setTab={setTab} catchups={catchups}
@@ -654,6 +907,17 @@ export default function App() {
           onSend={(text) => sendMessage(chatWith, text)}
           onClose={() => setChatWith(null)}
           onOpenSchedule={() => setSchedulingWith(chatWith)}
+        />
+      )}
+
+      {realChatWith && (
+        <ChatModal
+          person={attendeesById[realChatWith]}
+          thread={realChatThread}
+          busy={realChatLoading}
+          onSend={sendRealChatMessage}
+          onClose={() => setRealChatWith(null)}
+          onOpenSchedule={() => setSchedulingWith(realChatWith)}
         />
       )}
 
@@ -1000,16 +1264,19 @@ function MapsView() {
 /* ------------------------------------------------------------------ */
 /*  PEOPLE view                                                        */
 /* ------------------------------------------------------------------ */
-function PersonCard({ p, me, connected, onConnect, reason, onMessage, onSchedule, existingCatchup }) {
+function PersonCard({ p, me, connected, onConnect, reason, onMessage, onSchedule, existingCatchup, onSelect }) {
   const { shared, sharedIndustries } = matchScore(me, p);
   return (
-    <div style={{ background: "#fff", border: `1px solid ${C.line}`, borderRadius: 16, padding: 16 }}>
+    <div onClick={onSelect} style={{ background: "#fff", border: `1px solid ${C.line}`, borderRadius: 16, padding: 16, cursor: "pointer" }}>
       <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
         <Avatar name={p.name} photo={p.photo} size={44} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
             <div>
-              <div style={{ fontFamily: FONT_DISPLAY, fontWeight: 600, fontSize: 16 }}>{p.name}</div>
+              <div style={{ fontFamily: FONT_DISPLAY, fontWeight: 600, fontSize: 16, display: "flex", alignItems: "center", gap: 6 }}>
+                {p.name}
+                {p.isReal && <Tag tone="go">On Vector</Tag>}
+              </div>
               <div style={{ fontSize: 12.5, color: C.muted }}>{p.role} · {p.org}</div>
             </div>
             <div style={{ display: "flex", gap: 5, flexWrap: "wrap", justifyContent: "flex-end", maxWidth: 132 }}>
@@ -1018,7 +1285,7 @@ function PersonCard({ p, me, connected, onConnect, reason, onMessage, onSchedule
           </div>
         </div>
       </div>
-      <p style={{ fontSize: 13.5, color: C.ink, margin: "10px 0", lineHeight: 1.45 }}>{p.bio}</p>
+      {p.bio && <p style={{ fontSize: 13.5, color: C.ink, margin: "10px 0", lineHeight: 1.45 }}>{p.bio}</p>}
       {reason && (
         <div style={{ background: C.violetSoft, borderRadius: 10, padding: "8px 11px", marginBottom: 10, fontSize: 12.5, color: C.violet, display: "flex", gap: 7 }}>
           <Sparkles size={14} style={{ flexShrink: 0, marginTop: 1 }} /> <span>{reason}</span>
@@ -1036,19 +1303,19 @@ function PersonCard({ p, me, connected, onConnect, reason, onMessage, onSchedule
         {p.handle}{shared.length ? ` · ${shared.length} skill match` : ""}{sharedIndustries.length ? ` · ${sharedIndustries.length} industry match` : ""}
       </div>
       <div style={{ display: "flex", gap: 7 }}>
-        <button onClick={onConnect} title={connected ? "Connected" : "Connect"} style={{
+        <button onClick={(e) => { e.stopPropagation(); onConnect(); }} title={connected ? "Connected" : "Connect"} style={{
           width: 38, height: 36, flexShrink: 0, borderRadius: 10, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
           border: `1px solid ${connected ? C.go : C.ink}`, background: connected ? C.goSoft : C.ink, color: connected ? C.go : "#fff",
         }}>
           {connected ? <Check size={15} /> : <Handshake size={15} />}
         </button>
-        <button onClick={onMessage} style={{
+        <button onClick={(e) => { e.stopPropagation(); onMessage(); }} style={{
           flex: 1, height: 36, borderRadius: 10, cursor: "pointer", border: `1px solid ${C.line}`, background: "#fff", color: C.ink,
           display: "flex", alignItems: "center", justifyContent: "center", gap: 6, fontSize: 12.5, fontWeight: 600,
         }}>
           <MessageCircle size={14} /> Message
         </button>
-        <button onClick={onSchedule} style={{
+        <button onClick={(e) => { e.stopPropagation(); onSchedule(); }} style={{
           flex: 1, height: 36, borderRadius: 10, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, fontSize: 12.5, fontWeight: 600,
           border: `1px solid ${existingCatchup ? C.go : C.line}`, background: existingCatchup ? C.goSoft : "#fff", color: existingCatchup ? C.go : C.ink,
         }}>
@@ -1059,14 +1326,133 @@ function PersonCard({ p, me, connected, onConnect, reason, onMessage, onSchedule
   );
 }
 
-function PeopleView({ me, connections, connect, catchups, onMessage, onSchedule }) {
+function meAsPerson(me) {
+  return {
+    id: "__me__",
+    name: me.name,
+    role: me.occupation || "",
+    org: me.company || "",
+    bio: "",
+    tags: me.tags || [],
+    industries: me.industries || [],
+    looking: me.looking || [],
+    photo: me.photo,
+    handle: "@you",
+    linkedin: me.linkedin,
+    instagram: me.instagram,
+    twitter: me.twitter,
+  };
+}
+
+function socialUrl(platform, raw) {
+  const v = raw.trim();
+  if (/^https?:\/\//i.test(v)) return v;
+  const handle = v.replace(/^@/, "").replace(/^\/+/, "");
+  if (platform === "linkedin") return `https://www.linkedin.com/in/${handle}`;
+  if (platform === "instagram") return `https://instagram.com/${handle}`;
+  if (platform === "twitter") return `https://x.com/${handle}`;
+  return v;
+}
+
+function PersonDetailModal({ p, me, connected, onConnect, onMessage, onSchedule, existingCatchup, onClose, isMe, onEditProfile }) {
+  const { shared, sharedIndustries } = matchScore(me, p);
+  const socials = [
+    p.linkedin && { label: "LinkedIn", value: p.linkedin, href: socialUrl("linkedin", p.linkedin) },
+    p.instagram && { label: "Instagram", value: p.instagram, href: socialUrl("instagram", p.instagram) },
+    p.twitter && { label: "X", value: p.twitter, href: socialUrl("twitter", p.twitter) },
+  ].filter(Boolean);
+
+  return (
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(22,19,31,.45)", zIndex: 46, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: C.surface, borderRadius: 20, padding: 26, maxWidth: 460, width: "100%", maxHeight: "90vh", overflowY: "auto" }}>
+        <div style={{ display: "flex", justifyContent: "flex-end" }}>
+          <button onClick={onClose} style={{ border: "none", background: "transparent", cursor: "pointer", color: C.muted }}><X size={20} /></button>
+        </div>
+
+        <div style={{ display: "flex", gap: 14, alignItems: "center", marginTop: -8 }}>
+          <Avatar name={p.name} photo={p.photo} size={64} />
+          <div>
+            <div style={{ fontFamily: FONT_DISPLAY, fontWeight: 700, fontSize: 20 }}>{p.name}</div>
+            <div style={{ fontSize: 13.5, color: C.muted }}>{p.role} · {p.org}</div>
+            <div style={{ fontFamily: FONT_MONO, fontSize: 11.5, color: C.muted, marginTop: 2 }}>{p.handle}</div>
+          </div>
+        </div>
+
+        {p.bio && <p style={{ fontSize: 14, color: C.ink, margin: "16px 0", lineHeight: 1.5 }}>{p.bio}</p>}
+
+        {socials.length > 0 && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
+            {socials.map((s) => (
+              <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12.5, fontWeight: 600,
+                  border: `1px solid ${C.line}`, borderRadius: 999, padding: "6px 12px", color: C.ink,
+                  background: "#fff", textDecoration: "none", cursor: "pointer",
+                }}>
+                <ExternalLink size={12} /> {s.label}
+              </a>
+            ))}
+          </div>
+        )}
+
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
+          {(p.looking || []).map((l) => <Tag key={l} tone={l === "Mentor" ? "go" : "live"}>{l}</Tag>)}
+        </div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
+          {p.tags.map((t) => <Tag key={t} tone={shared.includes(t) ? "violet" : "ink"}>{t}</Tag>)}
+        </div>
+        {p.industries?.length > 0 && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 16 }}>
+            {p.industries.map((i) => <Tag key={i} tone={sharedIndustries.includes(i) ? "go" : "ink"}>{i}</Tag>)}
+          </div>
+        )}
+
+        {isMe ? (
+          <button onClick={onEditProfile} style={{
+            width: "100%", height: 40, borderRadius: 10, cursor: "pointer", border: "none", background: C.ink, color: "#fff",
+            display: "flex", alignItems: "center", justifyContent: "center", gap: 6, fontSize: 13, fontWeight: 600,
+          }}>
+            <Pencil size={15} /> Edit profile
+          </button>
+        ) : (
+          <div style={{ display: "flex", gap: 7 }}>
+            <button onClick={onConnect} title={connected ? "Connected" : "Connect"} style={{
+              width: 44, height: 40, flexShrink: 0, borderRadius: 10, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+              border: `1px solid ${connected ? C.go : C.ink}`, background: connected ? C.goSoft : C.ink, color: connected ? C.go : "#fff",
+            }}>
+              {connected ? <Check size={16} /> : <Handshake size={16} />}
+            </button>
+            <button onClick={onMessage} style={{
+              flex: 1, height: 40, borderRadius: 10, cursor: "pointer", border: `1px solid ${C.line}`, background: "#fff", color: C.ink,
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 6, fontSize: 13, fontWeight: 600,
+            }}>
+              <MessageCircle size={15} /> Message
+            </button>
+            <button onClick={onSchedule} style={{
+              flex: 1, height: 40, borderRadius: 10, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, fontSize: 13, fontWeight: 600,
+              border: `1px solid ${existingCatchup ? C.go : C.line}`, background: existingCatchup ? C.goSoft : "#fff", color: existingCatchup ? C.go : C.ink,
+            }}>
+              {existingCatchup ? <><Check size={15} /> Booked</> : <><CalendarDays size={15} /> Catchup</>}
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function PeopleView({ me, connections, connect, catchups, onMessage, onSchedule, onEditProfile, people }) {
   const [look, setLook] = useState("all");
   const [tag, setTag] = useState("all");
   const [ind, setInd] = useState("all");
   const [aiReasons, setAiReasons] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [selected, setSelected] = useState(null);
+  const [showMe, setShowMe] = useState(false);
+  const you = useMemo(() => meAsPerson(me), [me]);
+  const all = people || ATTENDEES;
 
-  let list = ATTENDEES
+  let list = all
     .filter((p) => look === "all" || (p.looking || []).includes(look))
     .filter((p) => tag === "all" || p.tags.includes(tag))
     .filter((p) => ind === "all" || (p.industries || []).includes(ind));
@@ -1077,7 +1463,7 @@ function PeopleView({ me, connections, connect, catchups, onMessage, onSchedule 
   async function findMatches() {
     setLoading(true);
     setAiReasons(null);
-    const ranked = [...ATTENDEES].sort((a, b) => matchScore(me, b).score - matchScore(me, a).score).slice(0, 6);
+    const ranked = [...all].sort((a, b) => matchScore(me, b).score - matchScore(me, a).score).slice(0, 6);
     try {
       const sys = "You are a warm, concise hackathon matchmaker. For each attendee, write ONE short sentence (max 18 words) on why this person should meet them, grounded in shared tags/industries and complementary goals. Return ONLY valid JSON: an array of {id, reason}. No prose, no markdown.";
       const payload = JSON.stringify({
@@ -1099,7 +1485,7 @@ function PeopleView({ me, connections, connect, catchups, onMessage, onSchedule 
 
   return (
     <div>
-      <SectionTitle kicker={`${ATTENDEES.length} builders here`} title="Find your people"
+      <SectionTitle kicker={`${all.length} builders here`} title="Find your people"
         note="Sorted by overlap with your profile. Connect, send a message, or lock in a 15-minute catchup — both show up in My schedule." />
 
       <div style={{ background: C.ink, borderRadius: 16, padding: 16, marginBottom: 20, display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap" }}>
@@ -1113,6 +1499,18 @@ function PeopleView({ me, connections, connect, catchups, onMessage, onSchedule 
         }}>
           {loading ? <><Loader2 size={15} style={{ animation: "spin 1s linear infinite" }} /> Matching…</> : <>Find my matches <ArrowRight size={15} /></>}
         </button>
+      </div>
+
+      <div onClick={() => setShowMe(true)} style={{
+        display: "flex", gap: 12, alignItems: "center", background: "#fff", border: `1px solid ${C.line}`,
+        borderRadius: 16, padding: 14, marginBottom: 20, cursor: "pointer",
+      }}>
+        <Avatar name={you.name} photo={you.photo} size={44} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontFamily: FONT_DISPLAY, fontWeight: 600, fontSize: 16 }}>{you.name} <span style={{ fontWeight: 400, color: C.muted, fontSize: 12.5 }}>(you)</span></div>
+          <div style={{ fontSize: 12.5, color: C.muted }}>{[you.role, you.org].filter(Boolean).join(" · ") || "Tap to fill in your profile"}</div>
+        </div>
+        <Pencil size={16} color={C.muted} />
       </div>
 
       <div style={{ display: "flex", gap: 7, flexWrap: "wrap", marginBottom: 10 }}>
@@ -1136,9 +1534,25 @@ function PeopleView({ me, connections, connect, catchups, onMessage, onSchedule 
             onConnect={() => connect(p.id)} reason={aiReasons?.[p.id]}
             onMessage={() => onMessage(p.id)}
             onSchedule={() => onSchedule(p.id)}
+            onSelect={() => setSelected(p)}
             existingCatchup={catchups.find((c) => c.personId === p.id)} />
         ))}
       </div>
+
+      {selected && (
+        <PersonDetailModal p={selected} me={me} connected={connections.has(selected.id)}
+          onConnect={() => connect(selected.id)}
+          onMessage={() => { setSelected(null); onMessage(selected.id); }}
+          onSchedule={() => { setSelected(null); onSchedule(selected.id); }}
+          existingCatchup={catchups.find((c) => c.personId === selected.id)}
+          onClose={() => setSelected(null)} />
+      )}
+
+      {showMe && (
+        <PersonDetailModal p={you} me={me} isMe
+          onEditProfile={() => { setShowMe(false); onEditProfile(); }}
+          onClose={() => setShowMe(false)} />
+      )}
     </div>
   );
 }
@@ -1734,18 +2148,56 @@ function ScheduleCatchupModal({ person, schedule, catchups, attendeesById, exist
 /* ------------------------------------------------------------------ */
 function ProfileSetup({ me, setMe, close }) {
   const [name, setName] = useState(me.name === "You" ? "" : me.name);
+  const [nameError, setNameError] = useState("");
+  const [occupation, setOccupation] = useState(me.occupation || "");
+  const [occupationError, setOccupationError] = useState("");
+  const [company, setCompany] = useState(me.company || "");
+  const [companyError, setCompanyError] = useState("");
+  const [linkedin, setLinkedin] = useState(me.linkedin || "");
+  const [instagram, setInstagram] = useState(me.instagram || "");
+  const [twitter, setTwitter] = useState(me.twitter || "");
   const [tags, setTags] = useState(new Set(me.tags || []));
+  const [tagsError, setTagsError] = useState("");
   const [industries, setIndustries] = useState(new Set(me.industries || []));
+  const [industriesError, setIndustriesError] = useState("");
   const [looking, setLooking] = useState(new Set(me.looking || []));
+  const [lookingError, setLookingError] = useState("");
   const [photo, setPhoto] = useState(me.photo || null);
   const [photoError, setPhotoError] = useState("");
 
-  const toggleTag = (t) => setTags((p) => { const n = new Set(p); n.has(t) ? n.delete(t) : n.add(t); return n; });
-  const toggleIndustry = (i) => setIndustries((p) => { const n = new Set(p); n.has(i) ? n.delete(i) : n.add(i); return n; });
-  const toggleLooking = (l) => setLooking((p) => { const n = new Set(p); n.has(l) ? n.delete(l) : n.add(l); return n; });
+  const toggleTag = (t) => { setTags((p) => { const n = new Set(p); n.has(t) ? n.delete(t) : n.add(t); return n; }); setTagsError(""); };
+  const toggleIndustry = (i) => { setIndustries((p) => { const n = new Set(p); n.has(i) ? n.delete(i) : n.add(i); return n; }); setIndustriesError(""); };
+  const toggleLooking = (l) => { setLooking((p) => { const n = new Set(p); n.has(l) ? n.delete(l) : n.add(l); return n; }); setLookingError(""); };
 
   const save = () => {
-    setMe({ name: name.trim() || "You", tags: [...tags], industries: [...industries], looking: [...looking], photo });
+    const errors = {
+      name: !name.trim() ? "Name is required." : "",
+      occupation: !occupation.trim() ? "Occupation is required." : "",
+      company: !company.trim() ? "Company is required." : "",
+      tags: tags.size === 0 ? "Pick at least one skill or interest." : "",
+      industries: industries.size === 0 ? "Pick at least one industry." : "",
+      looking: looking.size === 0 ? "Pick at least one." : "",
+    };
+    setNameError(errors.name);
+    setOccupationError(errors.occupation);
+    setCompanyError(errors.company);
+    setTagsError(errors.tags);
+    setIndustriesError(errors.industries);
+    setLookingError(errors.looking);
+    if (Object.values(errors).some(Boolean)) return;
+
+    setMe({
+      name: name.trim(),
+      occupation: occupation.trim(),
+      company: company.trim(),
+      linkedin: linkedin.trim(),
+      instagram: instagram.trim(),
+      twitter: twitter.trim(),
+      tags: [...tags],
+      industries: [...industries],
+      looking: [...looking],
+      photo,
+    });
     close();
   };
 
@@ -1813,26 +2265,67 @@ function ProfileSetup({ me, setMe, close }) {
           </div>
         </div>
 
-        <label style={{ fontSize: 12.5, fontWeight: 600, display: "block", margin: "16px 0 6px" }}>Name</label>
-        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Alex Chen"
-          style={{ width: "100%", border: `1px solid ${C.line}`, borderRadius: 10, padding: "10px 12px", fontSize: 14, outline: "none" }} />
+        <label style={{ fontSize: 12.5, fontWeight: 600, display: "block", margin: "16px 0 6px" }}>
+          Name <span style={{ color: C.live }}>*</span>
+        </label>
+        <input value={name} onChange={(e) => { setName(e.target.value); if (nameError) setNameError(""); }} placeholder="e.g. Alex Chen"
+          style={{ width: "100%", border: `1px solid ${nameError ? C.live : C.line}`, borderRadius: 10, padding: "10px 12px", fontSize: 14, outline: "none" }} />
+        {nameError && <div style={{ fontSize: 12, color: C.live, marginTop: 4 }}>{nameError}</div>}
 
-        <label style={{ fontSize: 12.5, fontWeight: 600, display: "block", margin: "16px 0 6px" }}>Your skills & interests</label>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
-          {ALL_TAGS.map((t) => <Tag key={t} active={tags.has(t)} onClick={() => toggleTag(t)}>{t}</Tag>)}
-        </div>
-
-        <label style={{ fontSize: 12.5, fontWeight: 600, display: "block", margin: "16px 0 6px" }}>Industries you're focused on</label>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
-          {INDUSTRIES.map((i) => <Tag key={i} active={industries.has(i)} onClick={() => toggleIndustry(i)}>{i}</Tag>)}
+        <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
+          <div style={{ flex: 1 }}>
+            <label style={{ fontSize: 12.5, fontWeight: 600, display: "block", marginBottom: 6 }}>
+              Occupation <span style={{ color: C.live }}>*</span>
+            </label>
+            <input value={occupation} onChange={(e) => { setOccupation(e.target.value); if (occupationError) setOccupationError(""); }} placeholder="e.g. Product Designer"
+              style={{ width: "100%", border: `1px solid ${occupationError ? C.live : C.line}`, borderRadius: 10, padding: "10px 12px", fontSize: 14, outline: "none" }} />
+            {occupationError && <div style={{ fontSize: 12, color: C.live, marginTop: 4 }}>{occupationError}</div>}
+          </div>
+          <div style={{ flex: 1 }}>
+            <label style={{ fontSize: 12.5, fontWeight: 600, display: "block", marginBottom: 6 }}>
+              Company <span style={{ color: C.live }}>*</span>
+            </label>
+            <input value={company} onChange={(e) => { setCompany(e.target.value); if (companyError) setCompanyError(""); }} placeholder="e.g. Vector"
+              style={{ width: "100%", border: `1px solid ${companyError ? C.live : C.line}`, borderRadius: 10, padding: "10px 12px", fontSize: 14, outline: "none" }} />
+            {companyError && <div style={{ fontSize: 12, color: C.live, marginTop: 4 }}>{companyError}</div>}
+          </div>
         </div>
 
         <label style={{ fontSize: 12.5, fontWeight: 600, display: "block", margin: "16px 0 6px" }}>
-          I'm looking for <span style={{ color: C.muted, fontWeight: 400 }}>(pick any that apply)</span>
+          Socials <span style={{ color: C.muted, fontWeight: 400 }}>(optional)</span>
+        </label>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <input value={linkedin} onChange={(e) => setLinkedin(e.target.value)} placeholder="LinkedIn URL or @handle"
+            style={{ width: "100%", border: `1px solid ${C.line}`, borderRadius: 10, padding: "10px 12px", fontSize: 14, outline: "none" }} />
+          <input value={instagram} onChange={(e) => setInstagram(e.target.value)} placeholder="Instagram @handle"
+            style={{ width: "100%", border: `1px solid ${C.line}`, borderRadius: 10, padding: "10px 12px", fontSize: 14, outline: "none" }} />
+          <input value={twitter} onChange={(e) => setTwitter(e.target.value)} placeholder="X (Twitter) @handle"
+            style={{ width: "100%", border: `1px solid ${C.line}`, borderRadius: 10, padding: "10px 12px", fontSize: 14, outline: "none" }} />
+        </div>
+
+        <label style={{ fontSize: 12.5, fontWeight: 600, display: "block", margin: "16px 0 6px" }}>
+          Your skills & interests <span style={{ color: C.live }}>*</span>
+        </label>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
+          {ALL_TAGS.map((t) => <Tag key={t} active={tags.has(t)} onClick={() => toggleTag(t)}>{t}</Tag>)}
+        </div>
+        {tagsError && <div style={{ fontSize: 12, color: C.live, marginTop: 4 }}>{tagsError}</div>}
+
+        <label style={{ fontSize: 12.5, fontWeight: 600, display: "block", margin: "16px 0 6px" }}>
+          Industries you're focused on <span style={{ color: C.live }}>*</span>
+        </label>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
+          {INDUSTRIES.map((i) => <Tag key={i} active={industries.has(i)} onClick={() => toggleIndustry(i)}>{i}</Tag>)}
+        </div>
+        {industriesError && <div style={{ fontSize: 12, color: C.live, marginTop: 4 }}>{industriesError}</div>}
+
+        <label style={{ fontSize: 12.5, fontWeight: 600, display: "block", margin: "16px 0 6px" }}>
+          I'm looking for <span style={{ color: C.live }}>*</span>
         </label>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
           {LOOKING.map((l) => <Tag key={l} active={looking.has(l)} onClick={() => toggleLooking(l)}>{l}</Tag>)}
         </div>
+        {lookingError && <div style={{ fontSize: 12, color: C.live, marginTop: 4 }}>{lookingError}</div>}
 
         <button onClick={save} style={{ width: "100%", marginTop: 22, background: C.ink, color: "#fff", border: "none", borderRadius: 12, padding: "13px", fontWeight: 600, fontSize: 15, cursor: "pointer" }}>
           Save profile
