@@ -24,7 +24,7 @@ A Next.js (App Router) + Supabase app. Deterministic logic is pure TypeScript in
 | `checklist_state` | (user_id, item_id, checked) | own only | — |
 | Storage `avatars` | public bucket | authed upload | — |
 
-Migrations `001`–`004` + `seed.sql` are idempotent; apply in order in the Supabase SQL editor (or via the Management API).
+Migrations `001`–`004` + `seed.sql` are idempotent; apply in order in the Supabase SQL editor (or via the Management API). `seed.sql` inserts a few authorless "community" starter blockers so the Radar feed is never empty. **Realtime** is enabled by `002_radar.sql` adding `blockers` + `blocker_metoo` to the `supabase_realtime` publication; if the live "me too" updates don't fire, confirm Realtime is on for those tables in Supabase → Database → Replication.
 
 ## The hero: `components/radar/EmbeddingPlot.tsx`
 A 2D "embedding field" plot of the live blocker feed. Each blocker is a node positioned so same-category blockers cluster (category → anchor + deterministic per-id jitter); node radius scales with its "me too" count; tapping a node selects it and "me too" draws connecting vectors to neighbours. It reads live data from `useRadar()` (which refetches on Supabase Realtime changes), so it updates across all signed-in clients. `RadarFeed` renders the heading + plot + `PostBlocker` composer + a `BlockerCard` list below for legibility/accessibility.

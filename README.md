@@ -51,4 +51,11 @@ Unit tests cover the deterministic logic (time helpers, schedule conflicts, keyw
 
 ## Deploy
 
-The app deploys on Vercel with zero config (Next.js is auto-detected). Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` in the project's environment variables, then deploy. Add the deployed URL to Supabase Auth's redirect allow-list so magic-link and OAuth redirects resolve.
+Deployed on Vercel via the CLI: `vercel --prod` from the repo root. Before deploying, know the gotchas (full list in `CLAUDE.md` → "Deploy gotchas") — they will bite otherwise:
+
+- The Vercel project framework **must** be Next.js. It's pinned in `vercel.json`; if it reverts to another preset, every route 500s/404s despite a green build.
+- The Edge middleware (`lib/supabase/middleware.ts`) is intentionally dependency-free — do not import `@supabase/ssr` there (it fails to initialise in Vercel's Edge runtime).
+- Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` in the Vercel project (Production + Preview).
+- Add the deployed URL to Supabase Auth → URL Configuration so magic-link/OAuth redirects resolve.
+
+See `docs/ARCHITECTURE.md` for the system map and `docs/ROADMAP.md` for what's left.
