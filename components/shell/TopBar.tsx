@@ -1,17 +1,46 @@
 "use client"
 
-import React from "react"
+import React, { useState } from "react"
 import Link from "next/link"
+import { Bell } from "lucide-react"
 import { SimClock } from "@/components/shell/SimClock"
 import { ModeToggle } from "@/components/shell/ModeToggle"
 import { Avatar } from "@/components/shell/Avatar"
 import { useProfile } from "@/lib/hooks/useProfile"
-import { colors, fonts, fontSize, fontWeight, spacing } from "@/lib/design/tokens"
+import { useSocial } from "@/components/shell/SocialProvider"
+import {
+  colors,
+  fonts,
+  fontSize,
+  fontWeight,
+  spacing,
+  radii,
+  shadows,
+  motion,
+} from "@/lib/design/tokens"
+
+/** Tiny relative-time helper: <60s "now", <60m "Nm", <24h "Nh", else "Nd" */
+function relTime(iso: string): string {
+  const diffMs = Date.now() - new Date(iso).getTime()
+  const s = Math.floor(diffMs / 1000)
+  if (s < 60) return "now"
+  const m = Math.floor(s / 60)
+  if (m < 60) return `${m}m`
+  const h = Math.floor(m / 60)
+  if (h < 24) return `${h}h`
+  const d = Math.floor(h / 24)
+  return `${d}d`
+}
 
 export function TopBar() {
   const { profile, loading } = useProfile()
   const name = loading || !profile ? "Profile" : profile.name || "Profile"
   const avatar_url = profile?.avatar_url
+
+  const { inbox, totalUnread, openChat } = useSocial()
+  const [open, setOpen] = useState(false)
+
+  const badgeCount = totalUnread > 9 ? "9+" : String(totalUnread)
 
   return (
     <header
@@ -63,6 +92,191 @@ export function TopBar() {
 
       {/* ModeToggle */}
       <ModeToggle />
+
+      {/* Notifications bell */}
+      <div style={{ position: "relative", flexShrink: 0 }}>
+        {/* Click-away backdrop */}
+        {open && (
+          <div
+            onClick={() => setOpen(false)}
+            style={{
+              position: "fixed",
+              inset: 0,
+              zIndex: 98,
+            }}
+          />
+        )}
+
+        {/* Bell button */}
+        <button
+          onClick={() => setOpen((prev) => !prev)}
+          aria-label="Notifications"
+          style={{
+            position: "relative",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: 32,
+            height: 32,
+            borderRadius: radii.md,
+            border: `1.5px solid ${colors.line}`,
+            background: "transparent",
+            cursor: "pointer",
+            color: colors.ink,
+            padding: 0,
+            transition: `background ${motion.fast} ${motion.ease}`,
+            zIndex: 99,
+          }}
+        >
+          <Bell size={16} strokeWidth={1.8} />
+          {totalUnread > 0 && (
+            <span
+              style={{
+                position: "absolute",
+                top: -4,
+                right: -4,
+                minWidth: 16,
+                height: 16,
+                borderRadius: radii.pill,
+                background: colors.violet,
+                color: colors.onDark,
+                fontFamily: fonts.mono,
+                fontSize: fontSize.micro,
+                fontWeight: fontWeight.semibold,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: "0 3px",
+                lineHeight: 1,
+              }}
+            >
+              {badgeCount}
+            </span>
+          )}
+        </button>
+
+        {/* Dropdown panel */}
+        {open && (
+          <div
+            style={{
+              position: "absolute",
+              top: 38,
+              right: 0,
+              width: 320,
+              maxHeight: 360,
+              overflowY: "auto",
+              background: colors.surface,
+              border: `1.5px solid ${colors.ink}`,
+              borderRadius: radii.xl,
+              boxShadow: shadows.card,
+              zIndex: 99,
+            }}
+          >
+            {inbox.length === 0 ? (
+              <div
+                style={{
+                  padding: `${spacing[4]}px`,
+                  fontFamily: fonts.body,
+                  fontSize: fontSize.meta,
+                  color: colors.muted,
+                  textAlign: "center",
+                }}
+              >
+                No messages yet.
+              </div>
+            ) : (
+              inbox.map((c) => (
+                <button
+                  key={c.otherId}
+                  onClick={() => {
+                    openChat({ id: c.otherId, name: c.name ?? "Builder", avatar: c.avatar })
+                    setOpen(false)
+                  }}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: spacing[2],
+                    width: "100%",
+                    padding: `${spacing[3]}px ${spacing[3]}px`,
+                    background: "transparent",
+                    border: "none",
+                    borderBottom: `1px solid ${colors.line}`,
+                    cursor: "pointer",
+                    textAlign: "left",
+                  }}
+                >
+                  {/* Avatar */}
+                  <div style={{ flexShrink: 0 }}>
+                    <Avatar name={c.name ?? "Builder"} photo={c.avatar} size={28} />
+                  </div>
+
+                  {/* Text content */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: spacing[1],
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontFamily: fonts.body,
+                          fontSize: fontSize.meta,
+                          fontWeight: fontWeight.medium,
+                          color: colors.ink,
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {c.name ?? "Builder"}
+                      </span>
+                      <span
+                        style={{
+                          fontFamily: fonts.mono,
+                          fontSize: fontSize.micro,
+                          color: colors.mutedSoft,
+                          flexShrink: 0,
+                        }}
+                      >
+                        {relTime(c.lastAt)}
+                      </span>
+                    </div>
+                    <span
+                      style={{
+                        fontFamily: fonts.body,
+                        fontSize: fontSize.micro,
+                        color: colors.muted,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                        display: "block",
+                      }}
+                    >
+                      {c.lastBody}
+                    </span>
+                  </div>
+
+                  {/* Unread dot */}
+                  {c.unread > 0 && (
+                    <div
+                      style={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: radii.pill,
+                        background: colors.violet,
+                        flexShrink: 0,
+                      }}
+                    />
+                  )}
+                </button>
+              ))
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Profile button */}
       <Link

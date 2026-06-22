@@ -3,8 +3,11 @@
 import React, { createContext, useContext, useState } from "react"
 import { useConnections } from "@/lib/hooks/useConnections"
 import { useCatchups, type CatchupRow } from "@/lib/hooks/useCatchups"
+import { useInbox, type InboxConversation } from "@/lib/hooks/useInbox"
 import { ChatModal } from "@/components/people/ChatModal"
 import { ScheduleCatchupModal } from "@/components/people/ScheduleCatchupModal"
+
+export type { InboxConversation }
 
 export interface ChatPerson {
   id: string
@@ -26,6 +29,9 @@ interface SocialApi {
   addCatchup: (personId: string, day: number, startMin: number, personName?: string) => void
   openChat: (p: ChatPerson) => void
   openCatchup: (p: ChatPerson) => void
+  inbox: InboxConversation[]
+  totalUnread: number
+  markRead: (otherId: string) => void
 }
 
 const SocialContext = createContext<SocialApi | null>(null)
@@ -33,6 +39,7 @@ const SocialContext = createContext<SocialApi | null>(null)
 export function SocialProvider({ children }: { children: React.ReactNode }) {
   const { connections, toggle: toggleConnection } = useConnections()
   const { catchups, add: addCatchup, cancel: cancelCatchup } = useCatchups()
+  const { conversations: inbox, totalUnread, markRead } = useInbox()
   const [chatPerson, setChatPerson] = useState<ChatPerson | null>(null)
   const [catchupPerson, setCatchupPerson] = useState<ChatPerson | null>(null)
 
@@ -42,8 +49,14 @@ export function SocialProvider({ children }: { children: React.ReactNode }) {
     catchups,
     cancelCatchup,
     addCatchup,
-    openChat: (p) => setChatPerson(p),
+    openChat: (p) => {
+      markRead(p.id)
+      setChatPerson(p)
+    },
     openCatchup: (p) => setCatchupPerson(p),
+    inbox,
+    totalUnread,
+    markRead,
   }
 
   return (
