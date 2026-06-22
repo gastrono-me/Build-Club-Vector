@@ -1,15 +1,16 @@
 "use client"
 
 import React from "react"
-import { Linkedin, Github, Twitter, Instagram, ExternalLink } from "lucide-react"
+import { Linkedin, Github, Twitter, Instagram, ExternalLink, MessageCircle, CalendarDays, Handshake, Check, Sparkles } from "lucide-react"
 import { Card } from "@/components/ui/Card"
 import { Tag } from "@/components/ui/Tag"
 import { Button } from "@/components/ui/Button"
 import { Avatar } from "@/components/shell/Avatar"
 import { matchScore } from "@/lib/match"
+import { useSocial } from "@/components/shell/SocialProvider"
 import type { Profile } from "@/types/index"
 import {
-  colors, fonts, fontSize, fontWeight, spacing,
+  colors, fonts, fontSize, fontWeight, spacing, radii,
 } from "@/lib/design/tokens"
 
 export interface NormalizedPerson {
@@ -35,9 +36,10 @@ export interface NormalizedPerson {
 interface PersonCardProps {
   person: NormalizedPerson
   me: Profile | null
+  reason?: string
 }
 
-export function PersonCard({ person, me }: PersonCardProps) {
+export function PersonCard({ person, me, reason }: PersonCardProps) {
   const meForMatch = me
     ? { tags: me.skills, industries: me.industries, looking: me.looking }
     : null
@@ -47,6 +49,15 @@ export function PersonCard({ person, me }: PersonCardProps) {
     looking: person.looking,
   }
   const { shared } = matchScore(meForMatch, personForMatch)
+
+  const { connections, toggleConnection, openChat, openCatchup, catchups } = useSocial()
+  const connected = connections.has(person.id)
+  const hasCatchup = catchups.some(c => c.person_id === person.id)
+  const chatPerson = {
+    id: person.id, name: person.name, occupation: person.occupation,
+    tags: person.tags, industries: person.industries, looking: person.looking,
+    bio: person.bio, avatar: person.avatar,
+  }
 
   const socialLinks: { href: string; label: string; icon: React.ReactNode }[] = []
 
@@ -141,6 +152,13 @@ export function PersonCard({ person, me }: PersonCardProps) {
         </div>
       )}
 
+      {/* AI match reason badge */}
+      {reason && (
+        <div style={{ background: colors.violetSoft, borderRadius: radii.md, padding: "8px 11px", marginBottom: spacing[2], fontSize: fontSize.meta, color: colors.violet, display: "flex", gap: 7 }}>
+          <Sparkles size={14} style={{ flexShrink: 0, marginTop: 1 }} /> <span>{reason}</span>
+        </div>
+      )}
+
       {/* Social links */}
       {socialLinks.length > 0 && (
         <div style={{ display: "flex", gap: spacing[2], marginBottom: spacing[3], flexWrap: "wrap" }}>
@@ -175,8 +193,15 @@ export function PersonCard({ person, me }: PersonCardProps) {
 
       {/* Action buttons */}
       <div style={{ display: "flex", gap: spacing[2] }}>
-        <Button variant="accent" size="sm">Connect</Button>
-        <Button variant="secondary" size="sm" disabled title="Coming soon">Message</Button>
+        <Button variant={connected ? "secondary" : "accent"} size="sm"
+          icon={connected ? <Check size={14} /> : <Handshake size={14} />}
+          onClick={() => toggleConnection(person.id)}>
+          {connected ? "Connected" : "Connect"}
+        </Button>
+        <Button variant="secondary" size="sm" icon={<MessageCircle size={14} />}
+          onClick={() => openChat(chatPerson)}>Message</Button>
+        <Button variant="secondary" size="sm" icon={<CalendarDays size={14} />}
+          onClick={() => openCatchup(chatPerson)}>{hasCatchup ? "Booked" : "Catchup"}</Button>
       </div>
     </Card>
   )

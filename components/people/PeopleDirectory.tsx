@@ -1,18 +1,21 @@
 "use client"
 
 import React, { useEffect, useState } from "react"
-import { Search } from "lucide-react"
+import { Search, Sparkles, ArrowRight } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useProfile } from "@/lib/hooks/useProfile"
 import { useEventData } from "@/lib/data/useEventData"
 import { keywordSearch } from "@/lib/search"
+import { localReason } from "@/lib/ai/local-fallbacks"
+import { matchScore } from "@/lib/match"
 import { Input } from "@/components/ui/Input"
 import { Tag } from "@/components/ui/Tag"
+import { Button } from "@/components/ui/Button"
 import { SectionTitle } from "@/components/ui/SectionTitle"
 import { PersonCard, type NormalizedPerson } from "@/components/people/PersonCard"
 import type { Profile } from "@/types/index"
 import { ALL_TAGS, INDUSTRIES, LOOKING } from "@/types/index"
-import { colors, fonts, fontSize, spacing } from "@/lib/design/tokens"
+import { colors, fonts, fontSize, fontWeight, radii, spacing } from "@/lib/design/tokens"
 
 export function PeopleDirectory() {
   const { profile } = useProfile()
@@ -26,6 +29,7 @@ export function PeopleDirectory() {
   const [selectedSkills, setSelectedSkills] = useState<string[]>([])
   const [selectedIndustries, setSelectedIndustries] = useState<string[]>([])
   const [selectedLooking, setSelectedLooking] = useState<string[]>([])
+  const [reasons, setReasons] = useState<Record<string, string> | null>(null)
 
   useEffect(() => {
     async function fetchProfiles() {
@@ -121,6 +125,18 @@ export function PeopleDirectory() {
     )
   }
 
+  function findMatches() {
+    const meForMatch = profile
+      ? { tags: profile.skills, industries: profile.industries, looking: profile.looking }
+      : { tags: [], industries: [], looking: [] }
+    const ranked = [...filtered]
+      .sort((a, b) => matchScore(meForMatch, b).score - matchScore(meForMatch, a).score)
+      .slice(0, 6)
+    const map: Record<string, string> = {}
+    ranked.forEach(p => { map[p.id] = localReason(meForMatch, { tags: p.tags, industries: p.industries, looking: p.looking }) })
+    setReasons(map)
+  }
+
   return (
     <div>
       <SectionTitle
@@ -137,6 +153,15 @@ export function PeopleDirectory() {
           onChange={e => setQuery(e.target.value)}
           icon={<Search size={15} />}
         />
+      </div>
+
+      {/* Who should I meet CTA */}
+      <div style={{ background: colors.ink, borderRadius: radii["2xl"], padding: 16, marginBottom: spacing[5], display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap" }}>
+        <div style={{ flex: 1, minWidth: 200, color: colors.onDark }}>
+          <div style={{ fontFamily: fonts.display, fontWeight: fontWeight.semibold, fontSize: fontSize.heading, display: "flex", alignItems: "center", gap: 8 }}><Sparkles size={17} /> Who should I meet?</div>
+          <div style={{ fontSize: fontSize.meta, opacity: 0.8, marginTop: 3 }}>Match-picked intros based on your skills and what you are looking for.</div>
+        </div>
+        <Button variant="accent" icon={<ArrowRight size={15} />} onClick={findMatches}>Find my matches</Button>
       </div>
 
       {/* Filter rows */}
@@ -259,7 +284,7 @@ export function PeopleDirectory() {
           }}
         >
           {filtered.map(person => (
-            <PersonCard key={person.id} person={person} me={profile} />
+            <PersonCard key={person.id} person={person} me={profile} reason={reasons?.[person.id]} />
           ))}
         </div>
       )}
