@@ -1,4 +1,4 @@
-import { matchScore, type PersonLike } from '@/lib/match'
+import { matchScore, LOOKING_PAIRS, type PersonLike } from '@/lib/match'
 import { fmt } from '@/lib/time'
 
 // ---- localReadinessReview ------------------------------------------------
@@ -177,4 +177,52 @@ export function localChatReply(me: PersonLike, person: PersonLike & { name?: str
     return `Nice, ${shared[0]} is exactly my thing too — let's grab 15 minutes sometime this week.`
   }
   return `Sounds good! Looking forward to connecting at AABW 🙌`
+}
+
+// ---- localPitchFeedback -------------------------------------------------
+
+/** Heuristic 3-minute pitch feedback. Ported from main App.jsx:208-212. */
+export function localPitchFeedback(text: string): string {
+  const words = text.trim().split(/\s+/).filter(Boolean).length
+  const minutes = (words / 130).toFixed(1)
+  return `Roughly ${words} words. At a natural speaking pace that is about ${minutes} minutes aloud (target is 3).\n\nMake sure you hit, in order: the problem in one sentence, who actually has it, what you built, and a moment that shows it working live.\n\nLikely judge questions: "What happens when the AI call fails?" and "Why does this need AI at all, versus a simple form or lookup?"`
+}
+
+// ---- localReason --------------------------------------------------------
+
+/** One-line "why meet them". Ported from main App.jsx:165-177. */
+export function localReason(
+  me: PersonLike,
+  person: PersonLike & { looking?: string[] }
+): string {
+  const { shared, sharedIndustries } = matchScore(me, person)
+  const bits: string[] = []
+  if (shared.length) bits.push(`shares your interest in ${shared.slice(0, 2).join(' & ')}`)
+  if (sharedIndustries.length) bits.push(`is also building in ${sharedIndustries[0]}`)
+  const myLooking = me.looking ?? []
+  const complementary = myLooking.some((l) =>
+    (LOOKING_PAIRS[l] ?? []).some((x) => (person.looking ?? []).includes(x))
+  )
+  if (complementary && (person.looking ?? []).length) {
+    bits.push(`is looking for a ${person.looking![0].toLowerCase()}`)
+  }
+  if (bits.length) return bits.join(' and ') + '.'
+  return (person.looking ?? []).length
+    ? `Looking for ${person.looking!.join('/').toLowerCase()}. Could be a complementary fit.`
+    : 'Worth a hello. Overlapping circles at the event.'
+}
+
+// ---- openingLine --------------------------------------------------------
+
+/** Deterministic chat opener. Ported from main App.jsx:240-247. */
+export function openingLine(person: { name: string; tags?: string[]; looking?: string[] }): string {
+  const tag = (person.tags ?? [])[0]
+  const lines = [
+    tag ? `Hey! Saw we're both into ${tag}. Excited to connect at AABW.` : `Hey! Excited to connect at AABW.`,
+    `Hi there! Looking forward to building this week. What are you working on?`,
+    (person.looking ?? [])[0]
+      ? `Hey! I'm looking for a ${person.looking![0].toLowerCase()}. What's your project idea?`
+      : `Hey! I'm around all week. What's your project idea?`,
+  ]
+  return lines[person.name.length % lines.length]
 }

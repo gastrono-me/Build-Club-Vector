@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { localReadinessReview, localAnswer, localChatReply } from '@/lib/ai/local-fallbacks'
+import { localReadinessReview, localAnswer, localChatReply, localPitchFeedback, localReason, openingLine } from '@/lib/ai/local-fallbacks'
 
 describe('localReadinessReview', () => {
   it('flags missing demo link when absent', () => {
@@ -96,5 +96,39 @@ describe('localChatReply', () => {
     expect(typeof result).toBe('string')
     // Should reference the person's first tag or industry
     expect(result).toMatch(/Agents|Fintech|Frontend|exploring/)
+  })
+})
+
+describe('localPitchFeedback', () => {
+  it('reports an approximate spoken duration from word count', () => {
+    const text = Array.from({ length: 130 }, () => 'word').join(' ')
+    const out = localPitchFeedback(text)
+    expect(out).toContain('130 words')
+    expect(out).toContain('1.0 minutes')
+  })
+  it('always includes the structure reminder and judge questions', () => {
+    const out = localPitchFeedback('short pitch')
+    expect(out).toContain('the problem in one sentence')
+    expect(out).toContain('Likely judge questions')
+  })
+})
+
+describe('localReason', () => {
+  it('names a shared tag when interests overlap', () => {
+    const me = { tags: ['Agents', 'RAG'], industries: [], looking: ['Teammate'] }
+    const p = { tags: ['Agents'], industries: [], looking: ['Teammate'] }
+    expect(localReason(me, p)).toContain('Agents')
+  })
+  it('falls back to a generic line when there is no overlap', () => {
+    const me = { tags: ['Mobile'], industries: [], looking: [] }
+    const p = { tags: ['Backend'], industries: [], looking: [] }
+    expect(localReason(me, p).length).toBeGreaterThan(0)
+  })
+})
+
+describe('openingLine', () => {
+  it('returns a non-empty opener mentioning the first tag when present', () => {
+    const line = openingLine({ name: 'Mai Tran', tags: ['Frontend'], looking: ['Teammate'] })
+    expect(line.length).toBeGreaterThan(0)
   })
 })

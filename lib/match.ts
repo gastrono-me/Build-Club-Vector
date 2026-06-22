@@ -1,4 +1,4 @@
-const LOOKING_PAIRS: Record<string, string[]> = {
+export const LOOKING_PAIRS: Record<string, string[]> = {
   Teammate: ['Teammate', 'Co-founder'],
   'Co-founder': ['Co-founder', 'Teammate'],
   Mentor: ['Mentee'],
