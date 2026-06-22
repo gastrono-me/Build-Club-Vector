@@ -24,14 +24,14 @@ Decision: keep `rebuild-v0` + Supabase as the foundation (one backend vs `main`'
 3. No Ably, no Vercel KV, no hand-rolled sessions. Everything on Supabase.
 4. `main`'s KV data is demo/test only — **no data migration** (fresh Supabase is canonical).
 
-## FLAGGED DECISION (confirm on review) — mock attendees in the directory
+## Directory model (locked): real users only — match `main`
 
-`main` removed mock attendees ("real users only"). `rebuild-v0`'s People directory currently shows real Supabase profiles **plus** ~12 mock attendees (seed for demo richness). Real cross-user DMs only work between real signed-in users.
-
-- **Recommended:** **keep mock attendees as directory seed** so the demo isn't empty, but enable **Message/DM only for real users**; **Connect and Catchup still work for mock attendees** (those are self-owned — your connection list / your calendar — and don't need the other party to act). Roleplay chat is removed entirely (per locked decision 2); a mock attendee simply has no Message button.
-- **Alternative:** match `main` exactly — drop mock attendees, real users only. Cleaner model, emptier demo until people sign up.
-
-Everything else proceeds the same either way; this only changes directory composition + which cards show a Message button.
+`rebuild-v0` will drop mock attendees entirely; the People directory and all people-matching features source solely from **real Supabase `profiles`** (readable by all authenticated users per `001`). This mirrors `main`'s `api/users.js` (registered users only). Ripples (all locked):
+- **People directory** lists only real signed-in profiles (minus self). No mock-attendee merge.
+- **"Who should I meet?" + match badges** rank real profiles via `matchScore`.
+- **DM / Connect / Catchup counterparties are always real user UUIDs** (the `person_name` persistence added in the `005` fixes still drives display labels).
+- **Mock attendee seed (`lib/data/attendees.ts`) is retired from the People path.** `useEventData` keeps sessions/days/venues (still mock behind the seam); `attendees` is removed from the People/match/chat consumers. The Ask Clawbie assistant's "people" context switches to real profiles (or empty when none).
+- **Demo implication:** directory/matching/DMs need ≥2 real accounts to show anything — which the two-account verification (R7) already requires.
 
 ## New data model — migration `006_messaging.sql`
 
@@ -77,8 +77,10 @@ Realtime: add `messages` to the `supabase_realtime` publication (same pattern as
 - Add `lumaUrl?: string` to the `Session` type (`types/index.ts`) and populate it on the mock sessions (`lib/data/sessions.ts`).
 - Add a Luma sign-up button on `components/discover/SessionCard.tsx` (link out, `target="_blank"`), shown when `lumaUrl` is present. (Sessions stay mock behind `useEventData`; this is just the link-out `main` added.)
 
-### R6 — Directory alignment
-- Implement the flagged decision: keep mock attendees as seed with Message disabled for them (recommended), or remove mock attendees entirely. Connect/Catchup behavior unchanged.
+### R6 — Directory alignment (real users only)
+- Remove the mock-attendee merge from `components/people/PeopleDirectory.tsx`; source only real `profiles`. Retire `lib/data/attendees.ts` from the People/match/chat paths (and from `useEventData`'s consumers; keep the sessions/days/venues seam).
+- Point the Ask Clawbie assistant's people context at real profiles (or empty list when none).
+- DM/Connect/Catchup counterparties are real user UUIDs throughout; verify the `005` `person_name` display fallback still labels catchups correctly.
 
 ### R7 — Verify end-to-end (two real accounts)
 - Two signed-in users (two browsers): user A messages user B → B sees it live + bell increments → B opens, unread clears, reply reaches A live. Confirm persistence across refresh and RLS (A cannot read C's messages).
@@ -101,5 +103,5 @@ Realtime: add `messages` to the `supabase_realtime` publication (same pattern as
 - Ably (replaced by Supabase Realtime).
 - Group chat / typing indicators / read receipts beyond unread counts.
 
-## Open item for review
-Confirm the **mock-attendee directory decision** (keep-as-seed-with-DMs-real-only vs real-users-only). Everything else is locked.
+## Status
+All decisions locked (directory = real users only). Plan ready to expand into executable task briefs and run via subagent-driven development, pending owner go-ahead.
