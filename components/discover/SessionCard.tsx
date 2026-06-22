@@ -1,6 +1,7 @@
 "use client"
 
 import React from "react"
+import { ExternalLink } from "lucide-react"
 import { Card } from "@/components/ui/Card"
 import { Tag } from "@/components/ui/Tag"
 import { fmt } from "@/lib/time"
@@ -10,6 +11,7 @@ import {
   fonts,
   fontSize,
   fontWeight,
+  letterSpacing,
   spacing,
 } from "@/lib/design/tokens"
 
@@ -104,6 +106,28 @@ export function SessionCard({
           {venueName}
         </span>
         <Tag tone={isLive ? "live" : "violet"}>{session.type}</Tag>
+        {session.lumaUrl && (
+          <a
+            href={session.lumaUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: spacing[1],
+              fontFamily: fonts.mono,
+              fontSize: fontSize.label,
+              letterSpacing: letterSpacing.label,
+              color: colors.violet,
+              textDecoration: "none",
+              textTransform: "uppercase" as const,
+              marginLeft: "auto",
+            }}
+          >
+            Sign up on Luma
+            <ExternalLink size={10} strokeWidth={2} />
+          </a>
+        )}
       </div>
 
       {/* Description */}

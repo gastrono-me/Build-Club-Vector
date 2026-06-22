@@ -11,6 +11,7 @@ export interface Session {
   by: string
   tags: string[]
   desc?: string
+  lumaUrl?: string
 }
 
 // ---- Day --------------------------------------------------------------------
