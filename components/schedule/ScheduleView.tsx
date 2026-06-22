@@ -16,7 +16,7 @@ import { fmt } from "@/lib/time"
 import { colors, fonts, fontSize, fontWeight, letterSpacing, radii, spacing } from "@/lib/design/tokens"
 
 export function ScheduleView() {
-  const { sessions, days, venues, attendees } = useEventData()
+  const { sessions, days, venues } = useEventData()
   const { day: simDay, mins: simMins } = useSimClock()
   const { saved, toggle, loading } = useSavedSchedule()
   const { catchups, cancelCatchup } = useSocial()
@@ -164,7 +164,7 @@ export function ScheduleView() {
                 )
               })}
               {catchups.filter(c => c.day === dayIdx).sort((a, b) => a.start_min - b.start_min).map(c => {
-                const resolvedName = c.person_name ?? attendees.find(at => at.id === c.person_id)?.name ?? "Builder"
+                const resolvedName = c.person_name ?? "Builder"
                 return (
                   <div key={c.id} style={{ display: "flex", gap: 12, alignItems: "center", background: colors.surface, border: `1.5px solid ${colors.line}`, borderRadius: radii.xl, padding: 16, marginBottom: spacing[3] }}>
                     <Avatar name={resolvedName} size={40} />

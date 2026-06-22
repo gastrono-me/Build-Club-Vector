@@ -50,4 +50,10 @@ describe('buildAgenda', () => {
     const out = buildAgenda(sessions, catchups, () => 'Mai Tran', 'c1')
     expect(out.filter(i => i.kind === 'catchup')).toHaveLength(0)
   })
+
+  it('person_name wins over nameFor when present', () => {
+    const catchupsWithName = [{ id: 'c2', person_id: 'a2', day: 1, start_min: 700, end_min: 715, person_name: 'Mai Tran' }]
+    const out = buildAgenda(sessions, catchupsWithName, () => 'Fallback Name')
+    expect(out.find(i => i.kind === 'catchup')?.title).toBe('Catchup with Mai Tran')
+  })
 })

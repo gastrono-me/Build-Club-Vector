@@ -42,7 +42,7 @@ export interface AgendaItem extends ScheduleItem {
  */
 export function buildAgenda(
   sessions: AgendaItem[],
-  catchups: { id: string; person_id: string; day: number; start_min: number; end_min: number }[],
+  catchups: { id: string; person_id: string; day: number; start_min: number; end_min: number; person_name?: string | null }[],
   nameFor: (personId: string) => string,
   excludeCatchupId?: string
 ): AgendaItem[] {
@@ -53,7 +53,7 @@ export function buildAgenda(
       day: c.day,
       start: c.start_min,
       end: c.end_min,
-      title: `Catchup with ${nameFor(c.person_id)}`,
+      title: `Catchup with ${c.person_name ?? nameFor(c.person_id)}`,
       kind: 'catchup',
     }))
   return [...sessions, ...catchupItems]

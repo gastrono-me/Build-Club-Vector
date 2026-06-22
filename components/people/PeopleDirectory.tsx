@@ -4,7 +4,6 @@ import React, { useEffect, useState } from "react"
 import { Search, Sparkles, ArrowRight } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useProfile } from "@/lib/hooks/useProfile"
-import { useEventData } from "@/lib/data/useEventData"
 import { keywordSearch } from "@/lib/search"
 import { localReason } from "@/lib/ai/local-fallbacks"
 import { matchScore } from "@/lib/match"
@@ -19,7 +18,6 @@ import { colors, fonts, fontSize, fontWeight, radii, spacing } from "@/lib/desig
 
 export function PeopleDirectory() {
   const { profile } = useProfile()
-  const { attendees } = useEventData()
 
   const [realProfiles, setRealProfiles] = useState<NormalizedPerson[]>([])
   const [signedInId, setSignedInId] = useState<string | null>(null)
@@ -64,29 +62,8 @@ export function PeopleDirectory() {
     fetchProfiles()
   }, [])
 
-  // Normalize mock attendees
-  const mockPeople: NormalizedPerson[] = attendees
-    .map(a => ({
-      id: a.id,
-      name: a.name,
-      occupation: a.org ? `${a.role}${a.role && a.org ? " · " : ""}${a.org}` : a.role,
-      tags: a.tags,
-      industries: a.industries,
-      looking: a.looking,
-      bio: a.bio,
-      tagline: undefined,
-      links: undefined,
-      handle: a.handle,
-      avatar: null,
-      isReal: false,
-    }))
-    .sort((a, b) => a.name.localeCompare(b.name))
-
-  // Merge: real first, mock second; exclude signed-in user
-  const allPeople: NormalizedPerson[] = [
-    ...realProfiles.filter(p => p.id !== signedInId),
-    ...mockPeople,
-  ]
+  // Real users only; exclude signed-in user
+  const allPeople: NormalizedPerson[] = realProfiles.filter(p => p.id !== signedInId)
 
   // Apply keyword search (NormalizedPerson lacks an index signature required by SearchablePerson,
   // so we cast through unknown on the input and output)

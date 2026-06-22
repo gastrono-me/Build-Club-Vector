@@ -1,12 +1,10 @@
-import type { Session, Attendee, Day, Venue } from '@/types/index'
+import type { Session, Day, Venue } from '@/types/index'
 import { SESSIONS } from './sessions'
-import { ATTENDEES } from './attendees'
 import { DAYS } from './days'
 import { VENUES } from './venues'
 
 export interface EventData {
   sessions: Session[]
-  attendees: Attendee[]
   days: Day[]
   venues: Record<string, Venue>
 }
@@ -18,7 +16,6 @@ export interface EventData {
 export function useEventData(): EventData {
   return {
     sessions: SESSIONS,
-    attendees: ATTENDEES,
     days: DAYS,
     venues: VENUES,
   }

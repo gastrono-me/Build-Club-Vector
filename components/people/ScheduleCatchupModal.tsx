@@ -19,7 +19,7 @@ const oxbloodSoft = colors.liveSoft
 export function ScheduleCatchupModal({ person, onClose }: { person: ChatPerson; onClose: () => void }) {
   const { catchups, addCatchup, cancelCatchup } = useSocial()
   const { saved } = useSavedSchedule()
-  const { sessions, days, attendees } = useEventData()
+  const { sessions, days } = useEventData()
 
   const existing = catchups.find(c => c.person_id === person.id)
   const [day, setDay] = useState<number>(existing?.day ?? 1)
@@ -31,7 +31,7 @@ export function ScheduleCatchupModal({ person, onClose }: { person: ChatPerson; 
     return arr
   }, [])
 
-  const nameFor = (id: string) => attendees.find(a => a.id === id)?.name ?? "someone"
+  const nameFor = (_id: string) => "Builder"
   const savedItems: AgendaItem[] = sessions
     .filter(s => saved.has(s.id))
     .map(s => ({ id: s.id, day: s.day, start: s.start, end: s.end, title: s.title, kind: "session" as const }))

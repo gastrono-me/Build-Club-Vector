@@ -10,22 +10,43 @@ import { useSimClock } from "@/lib/hooks/useSimClock"
 import { useSavedSchedule } from "@/lib/hooks/useSavedSchedule"
 import { useProfile } from "@/lib/hooks/useProfile"
 import { useSocial } from "@/components/shell/SocialProvider"
+import { createClient } from "@/lib/supabase/client"
 import { colors, radii, fontSize } from "@/lib/design/tokens"
 
 interface Msg { role: "user" | "assistant"; text: string }
 
+interface ProfileRow {
+  id: string
+  name: string | null
+  occupation: string | null
+  bio: string | null
+  skills: string[] | null
+  industries: string[] | null
+  looking: string[] | null
+}
+
 export function ClawbieChat() {
-  const { sessions, attendees, days, venues } = useEventData()
+  const { sessions, days, venues } = useEventData()
   const { day, mins } = useSimClock()
   const { saved } = useSavedSchedule()
   const { profile } = useProfile()
   const { catchups } = useSocial()
+  const [realPeople, setRealPeople] = useState<ProfileRow[]>([])
   const [msgs, setMsgs] = useState<Msg[]>([
     { role: "assistant", text: "Hi there. I can see the full programme, the people here, and your schedule. Ask me what is on now, what to do with a free hour, or who to meet." },
   ])
   const [input, setInput] = useState("")
   const endRef = useRef<HTMLDivElement>(null)
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }) }, [msgs])
+
+  useEffect(() => {
+    async function fetchPeople() {
+      const supabase = createClient()
+      const { data } = await supabase.from("profiles").select("id, name, occupation, bio, skills, industries, looking")
+      if (data) setRealPeople(data as ProfileRow[])
+    }
+    fetchPeople()
+  }, [])
 
   const quick = ["What's happening right now?", "Plan my free time today", "Who should I meet?", "What's the best path to Demo Day?"]
 
@@ -38,7 +59,7 @@ export function ClawbieChat() {
       ? { tags: profile.skills, industries: profile.industries, looking: profile.looking }
       : { tags: [], industries: [], looking: [] }
     const ctx: LocalAnswerCtx = {
-      attendees: attendees.map(a => ({ id: a.id, name: a.name, occupation: a.role, bio: a.bio, tags: a.tags, industries: a.industries, looking: a.looking })),
+      attendees: realPeople.map(p => ({ id: p.id, name: p.name ?? "", occupation: p.occupation ?? "", bio: p.bio ?? "", tags: p.skills ?? [], industries: p.industries ?? [], looking: p.looking ?? [] })),
       sessions: sessions.map(s => ({ id: s.id, day: s.day, start: s.start, end: s.end, title: s.title, venue: s.venue, tags: s.tags })),
       days: days.map(d => ({ idx: d.idx, label: d.label, date: d.date })),
       venues,

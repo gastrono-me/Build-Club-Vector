@@ -3,10 +3,9 @@ import { useEventData } from '@/lib/data/useEventData'
 import { BLOCKER_TAGS } from '@/types/index'
 
 describe('useEventData', () => {
-  it('returns sessions, attendees, days, venues synchronously', () => {
+  it('returns sessions, days, venues synchronously', () => {
     const data = useEventData()
     expect(data).toHaveProperty('sessions')
-    expect(data).toHaveProperty('attendees')
     expect(data).toHaveProperty('days')
     expect(data).toHaveProperty('venues')
   })
@@ -23,15 +22,6 @@ describe('useEventData', () => {
       expect(s).toHaveProperty('venue')
       expect(s).toHaveProperty('type')
       expect(s).toHaveProperty('tags')
-    }
-  })
-
-  it('attendees array is non-empty and each attendee has required fields', () => {
-    const { attendees } = useEventData()
-    expect(attendees.length).toBeGreaterThan(0)
-    for (const a of attendees) {
-      expect(a).toHaveProperty('id')
-      expect(a).toHaveProperty('name')
     }
   })
 
