@@ -5,6 +5,7 @@ import Link from "next/link"
 import { Bell } from "lucide-react"
 import { SimClock } from "@/components/shell/SimClock"
 import { ModeToggle } from "@/components/shell/ModeToggle"
+import { MobileMenu } from "@/components/shell/MobileMenu"
 import { Avatar } from "@/components/shell/Avatar"
 import { useProfile } from "@/lib/hooks/useProfile"
 import { useSocial } from "@/components/shell/SocialProvider"
@@ -87,6 +88,20 @@ export function TopBar() {
       {/* Spacer */}
       <div style={{ flex: 1 }} />
 
+      {/* Mobile: hamburger trigger for the slide-out drawer (nav + controls + messages) */}
+      <MobileMenu />
+
+      <style>{`
+        .vec-topbar-desktop { display: none; }
+        @media (min-width: 768px) {
+          .vec-topbar-desktop {
+            display: flex;
+            align-items: center;
+            gap: ${spacing[4]}px;
+          }
+        }
+      `}</style>
+      <div className="vec-topbar-desktop">
       {/* SimClock */}
       <SimClock />
 
@@ -301,6 +316,7 @@ export function TopBar() {
           {name}
         </span>
       </Link>
+      </div>
     </header>
   )
 }

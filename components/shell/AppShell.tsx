@@ -32,12 +32,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             margin-left: 200px;
           }
         }
-        /* Mobile: offset bottom for nav bar */
-        @media (max-width: 767px) {
-          .vec-main {
-            padding-bottom: 64px;
-          }
-        }
       `}</style>
       <TopBar />
       <Nav />
