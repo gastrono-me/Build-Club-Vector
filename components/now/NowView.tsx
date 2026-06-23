@@ -114,7 +114,7 @@ export function NowView() {
       }}
     >
       <SectionTitle
-        kicker="Now"
+        kicker="Now + Upcoming"
         title={currentDay ? currentDay.label : `Day ${day + 1}`}
         note={currentDay ? `${currentDay.date} · ${currentDay.sub}` : undefined}
       />
