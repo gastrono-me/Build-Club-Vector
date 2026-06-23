@@ -5,7 +5,7 @@ import { ExternalLink } from "lucide-react"
 import { Card } from "@/components/ui/Card"
 import { Tag } from "@/components/ui/Tag"
 import { fmt } from "@/lib/time"
-import type { Session } from "@/types/index"
+import type { Session, TbaSession } from "@/types/index"
 import {
   colors,
   fonts,
@@ -16,10 +16,10 @@ import {
 } from "@/lib/design/tokens"
 
 export interface SessionCardProps {
-  session: Session
+  session: Session | TbaSession
   isLive: boolean
   isSaved: boolean
-  onToggleSave: () => void
+  onToggleSave?: () => void
   venueName: string
 }
 
@@ -54,24 +54,26 @@ export function SessionCard({
         >
           {session.title}
         </div>
-        <button
-          type="button"
-          onClick={onToggleSave}
-          aria-label={isSaved ? "Remove from saved" : "Save session"}
-          aria-pressed={isSaved}
-          style={{
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            padding: "2px 4px",
-            fontSize: fontSize.heading,
-            lineHeight: 1,
-            color: isSaved ? colors.violet : colors.mutedSoft,
-            flexShrink: 0,
-          }}
-        >
-          {isSaved ? "★" : "☆"}
-        </button>
+        {onToggleSave && (
+          <button
+            type="button"
+            onClick={onToggleSave}
+            aria-label={isSaved ? "Remove from saved" : "Save session"}
+            aria-pressed={isSaved}
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              padding: "2px 4px",
+              fontSize: fontSize.heading,
+              lineHeight: 1,
+              color: isSaved ? colors.violet : colors.mutedSoft,
+              flexShrink: 0,
+            }}
+          >
+            {isSaved ? "★" : "☆"}
+          </button>
+        )}
       </div>
 
       {/* Time range */}
@@ -83,7 +85,7 @@ export function SessionCard({
           marginBottom: spacing[2],
         }}
       >
-        {fmt(session.start)} – {fmt(session.end)}
+        {"start" in session ? `${fmt(session.start)} – ${fmt(session.end)}` : "Time TBA"}
       </div>
 
       {/* Venue + type row */}

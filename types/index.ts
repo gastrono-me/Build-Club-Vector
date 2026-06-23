@@ -14,6 +14,20 @@ export interface Session {
   lumaUrl?: string
 }
 
+// ---- TbaSession ---------------------------------------------------------------
+// Real sessions whose date/time Luma hasn't published yet (approval-gated listings).
+
+export interface TbaSession {
+  id: string
+  type: string
+  title: string
+  venue: string
+  by: string
+  tags: string[]
+  desc?: string
+  lumaUrl?: string
+}
+
 // ---- Day --------------------------------------------------------------------
 
 export interface Day {

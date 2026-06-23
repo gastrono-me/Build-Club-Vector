@@ -10,7 +10,7 @@ import { SessionCard } from "@/components/discover/SessionCard"
 import { colors, fonts, fontSize, spacing } from "@/lib/design/tokens"
 
 export function Calendar() {
-  const { sessions, days, venues } = useEventData()
+  const { sessions, tbaSessions, days, venues } = useEventData()
   const { day: simDay, mins: simMins } = useSimClock()
   const { saved, toggle } = useSavedSchedule()
 
@@ -79,6 +79,28 @@ export function Calendar() {
             )
           })}
         </div>
+      )}
+
+      {/* Sessions without a published time slot yet */}
+      {tbaSessions.length > 0 && (
+        <>
+          <SectionTitle kicker="MORE SESSIONS" title="Time TBA" />
+          <div style={{ display: "flex", flexDirection: "column", gap: spacing[3] }}>
+            {tbaSessions.map(session => {
+              const venueName = venues[session.venue]?.name ?? session.venue
+              return (
+                <SessionCard
+                  key={session.id}
+                  session={session}
+                  isLive={false}
+                  isSaved={false}
+                  onToggleSave={undefined}
+                  venueName={venueName}
+                />
+              )
+            })}
+          </div>
+        </>
       )}
     </div>
   )

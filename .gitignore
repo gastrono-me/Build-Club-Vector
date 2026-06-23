@@ -4,6 +4,7 @@ dist
 .env
 .env.local
 .vercel
+tsconfig.tsbuildinfo
 
 # local SDD scratch (plans, ledger, reference) — never commit
 .superpowers/

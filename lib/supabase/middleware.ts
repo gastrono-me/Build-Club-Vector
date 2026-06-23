@@ -15,7 +15,12 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
 
   const hasAuthCookie = request.cookies
     .getAll()
-    .some((c) => c.name.startsWith('sb-') && c.name.includes('-auth-token'))
+    .some(
+      (c) =>
+        c.name.startsWith('sb-') &&
+        c.name.includes('-auth-token') &&
+        !c.name.includes('-code-verifier'),
+    )
 
   if (!hasAuthCookie && !isPublic) {
     return NextResponse.redirect(new URL('/login', request.url))
