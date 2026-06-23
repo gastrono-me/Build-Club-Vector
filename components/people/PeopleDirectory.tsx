@@ -1,9 +1,10 @@
 "use client"
 
 import React, { useEffect, useState } from "react"
-import { Search, Sparkles, ArrowRight } from "lucide-react"
+import { Search, Sparkles, ArrowRight, SlidersHorizontal, ChevronDown, ChevronUp, X } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useProfile } from "@/lib/hooks/useProfile"
+import { useSocial } from "@/components/shell/SocialProvider"
 import { keywordSearch } from "@/lib/search"
 import { localReason } from "@/lib/ai/local-fallbacks"
 import { matchScore } from "@/lib/match"
@@ -16,8 +17,11 @@ import type { Profile } from "@/types/index"
 import { ALL_TAGS, INDUSTRIES, LOOKING } from "@/types/index"
 import { colors, fonts, fontSize, fontWeight, radii, spacing } from "@/lib/design/tokens"
 
+type View = "all" | "connected"
+
 export function PeopleDirectory() {
   const { profile } = useProfile()
+  const { connections } = useSocial()
 
   const [realProfiles, setRealProfiles] = useState<NormalizedPerson[]>([])
   const [signedInId, setSignedInId] = useState<string | null>(null)
@@ -27,7 +31,10 @@ export function PeopleDirectory() {
   const [selectedSkills, setSelectedSkills] = useState<string[]>([])
   const [selectedIndustries, setSelectedIndustries] = useState<string[]>([])
   const [selectedLooking, setSelectedLooking] = useState<string[]>([])
+  const [filtersOpen, setFiltersOpen] = useState(false)
+  const [view, setView] = useState<View>("all")
   const [reasons, setReasons] = useState<Record<string, string> | null>(null)
+  const [matchedIds, setMatchedIds] = useState<string[]>([])
 
   useEffect(() => {
     async function fetchProfiles() {
@@ -73,7 +80,7 @@ export function PeopleDirectory() {
   ) as unknown as NormalizedPerson[]
 
   // Apply chip filters
-  const filtered = afterKeyword.filter(person => {
+  const afterChips = afterKeyword.filter(person => {
     const skillsOk =
       selectedSkills.length === 0 ||
       selectedSkills.some(s => person.tags.includes(s))
@@ -85,6 +92,13 @@ export function PeopleDirectory() {
       selectedLooking.some(l => person.looking.includes(l))
     return skillsOk && industriesOk && lookingOk
   })
+
+  // Apply All / Connected view
+  const filtered = view === "connected"
+    ? afterChips.filter(p => connections.has(p.id))
+    : afterChips
+
+  const activeFilterCount = selectedSkills.length + selectedIndustries.length + selectedLooking.length
 
   function toggleSkill(tag: string) {
     setSelectedSkills(prev =>
@@ -101,6 +115,11 @@ export function PeopleDirectory() {
       prev.includes(l) ? prev.filter(x => x !== l) : [...prev, l]
     )
   }
+  function clearChipFilters() {
+    setSelectedSkills([])
+    setSelectedIndustries([])
+    setSelectedLooking([])
+  }
 
   function findMatches() {
     const meForMatch = profile
@@ -112,7 +131,20 @@ export function PeopleDirectory() {
     const map: Record<string, string> = {}
     ranked.forEach(p => { map[p.id] = localReason(meForMatch, { tags: p.tags, industries: p.industries, looking: p.looking }) })
     setReasons(map)
+    setMatchedIds(ranked.map(p => p.id))
   }
+
+  function clearSuggestions() {
+    setReasons(null)
+    setMatchedIds([])
+  }
+
+  // Suggested-for-you picks stay pinned above the rest of the grid, in ranked order.
+  const suggested = matchedIds
+    .map(id => filtered.find(p => p.id === id))
+    .filter((p): p is NormalizedPerson => Boolean(p))
+  const suggestedIds = new Set(suggested.map(p => p.id))
+  const rest = filtered.filter(p => !suggestedIds.has(p.id))
 
   return (
     <div>
@@ -123,13 +155,52 @@ export function PeopleDirectory() {
       />
 
       {/* Keyword search */}
-      <div style={{ marginBottom: spacing[5] }}>
+      <div style={{ marginBottom: spacing[4] }}>
         <Input
           placeholder="Search by name, role, org, or bio…"
           value={query}
           onChange={e => setQuery(e.target.value)}
           icon={<Search size={15} />}
         />
+      </div>
+
+      {/* All / Connected view toggle */}
+      <div
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 2,
+          background: colors.line,
+          borderRadius: radii.pill,
+          padding: 2,
+          marginBottom: spacing[5],
+        }}
+      >
+        {(["all", "connected"] as View[]).map(v => {
+          const active = view === v
+          return (
+            <button
+              key={v}
+              onClick={() => setView(v)}
+              style={{
+                fontFamily: fonts.mono,
+                fontSize: fontSize.label,
+                fontWeight: fontWeight.semibold,
+                padding: `${spacing[1]}px ${spacing[3]}px`,
+                borderRadius: radii.pill,
+                border: "none",
+                cursor: "pointer",
+                letterSpacing: "0.05em",
+                lineHeight: 1.4,
+                background: active ? colors.violet : "transparent",
+                color: active ? colors.onDark : colors.mutedSoft,
+                textTransform: "uppercase",
+              }}
+            >
+              {v === "all" ? "All" : `Connected (${connections.size})`}
+            </button>
+          )
+        })}
       </div>
 
       {/* Who should I meet CTA */}
@@ -141,88 +212,159 @@ export function PeopleDirectory() {
         <Button variant="accent" icon={<ArrowRight size={15} />} onClick={findMatches}>Find my matches</Button>
       </div>
 
-      {/* Filter rows */}
-      <div style={{ display: "flex", flexDirection: "column", gap: spacing[4], marginBottom: spacing[6] }}>
-        {/* Skills */}
-        <div>
-          <div
+      {/* Filters — collapsed by default; chip rows take a lot of vertical space, especially on mobile */}
+      <div style={{ marginBottom: spacing[6] }}>
+        <div style={{ display: "flex", alignItems: "center", gap: spacing[3] }}>
+          <button
+            type="button"
+            onClick={() => setFiltersOpen(prev => !prev)}
+            aria-expanded={filtersOpen}
             style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: spacing[2],
+              background: "transparent",
+              border: `1.5px solid ${colors.ink}`,
+              borderRadius: radii.md,
+              padding: `${spacing[2]}px ${spacing[3]}px`,
+              cursor: "pointer",
               fontFamily: fonts.mono,
               fontSize: fontSize.label,
-              letterSpacing: "0.06em",
-              textTransform: "uppercase" as const,
-              color: colors.muted,
-              marginBottom: spacing[2],
+              fontWeight: fontWeight.semibold,
+              letterSpacing: "0.05em",
+              textTransform: "uppercase",
+              color: colors.ink,
             }}
           >
-            Skills
-          </div>
-          <div style={{ display: "flex", flexWrap: "wrap" as const, gap: spacing[2] }}>
-            {ALL_TAGS.map(tag => (
-              <Tag
-                key={tag}
-                active={selectedSkills.includes(tag)}
-                onClick={() => toggleSkill(tag)}
+            <SlidersHorizontal size={14} />
+            Filters
+            {activeFilterCount > 0 && (
+              <span
+                style={{
+                  background: colors.violet,
+                  color: colors.onDark,
+                  borderRadius: radii.pill,
+                  minWidth: 16,
+                  height: 16,
+                  fontSize: fontSize.micro,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: "0 4px",
+                }}
               >
-                {tag}
-              </Tag>
-            ))}
-          </div>
+                {activeFilterCount}
+              </span>
+            )}
+            {filtersOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+          </button>
+          {activeFilterCount > 0 && (
+            <button
+              type="button"
+              onClick={clearChipFilters}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 4,
+                background: "transparent",
+                border: "none",
+                cursor: "pointer",
+                fontFamily: fonts.mono,
+                fontSize: fontSize.label,
+                color: colors.muted,
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+              }}
+            >
+              <X size={12} /> Clear
+            </button>
+          )}
         </div>
 
-        {/* Industries */}
-        <div>
-          <div
-            style={{
-              fontFamily: fonts.mono,
-              fontSize: fontSize.label,
-              letterSpacing: "0.06em",
-              textTransform: "uppercase" as const,
-              color: colors.muted,
-              marginBottom: spacing[2],
-            }}
-          >
-            Industries
-          </div>
-          <div style={{ display: "flex", flexWrap: "wrap" as const, gap: spacing[2] }}>
-            {INDUSTRIES.map(ind => (
-              <Tag
-                key={ind}
-                active={selectedIndustries.includes(ind)}
-                onClick={() => toggleIndustry(ind)}
+        {filtersOpen && (
+          <div style={{ display: "flex", flexDirection: "column", gap: spacing[4], marginTop: spacing[4] }}>
+            {/* Skills */}
+            <div>
+              <div
+                style={{
+                  fontFamily: fonts.mono,
+                  fontSize: fontSize.label,
+                  letterSpacing: "0.06em",
+                  textTransform: "uppercase" as const,
+                  color: colors.muted,
+                  marginBottom: spacing[2],
+                }}
               >
-                {ind}
-              </Tag>
-            ))}
-          </div>
-        </div>
+                Skills
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap" as const, gap: spacing[2] }}>
+                {ALL_TAGS.map(tag => (
+                  <Tag
+                    key={tag}
+                    active={selectedSkills.includes(tag)}
+                    onClick={() => toggleSkill(tag)}
+                  >
+                    {tag}
+                  </Tag>
+                ))}
+              </div>
+            </div>
 
-        {/* Looking for */}
-        <div>
-          <div
-            style={{
-              fontFamily: fonts.mono,
-              fontSize: fontSize.label,
-              letterSpacing: "0.06em",
-              textTransform: "uppercase" as const,
-              color: colors.muted,
-              marginBottom: spacing[2],
-            }}
-          >
-            Looking for
-          </div>
-          <div style={{ display: "flex", flexWrap: "wrap" as const, gap: spacing[2] }}>
-            {LOOKING.map(l => (
-              <Tag
-                key={l}
-                active={selectedLooking.includes(l)}
-                onClick={() => toggleLooking(l)}
+            {/* Industries */}
+            <div>
+              <div
+                style={{
+                  fontFamily: fonts.mono,
+                  fontSize: fontSize.label,
+                  letterSpacing: "0.06em",
+                  textTransform: "uppercase" as const,
+                  color: colors.muted,
+                  marginBottom: spacing[2],
+                }}
               >
-                {l}
-              </Tag>
-            ))}
+                Industries
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap" as const, gap: spacing[2] }}>
+                {INDUSTRIES.map(ind => (
+                  <Tag
+                    key={ind}
+                    active={selectedIndustries.includes(ind)}
+                    onClick={() => toggleIndustry(ind)}
+                  >
+                    {ind}
+                  </Tag>
+                ))}
+              </div>
+            </div>
+
+            {/* Looking for */}
+            <div>
+              <div
+                style={{
+                  fontFamily: fonts.mono,
+                  fontSize: fontSize.label,
+                  letterSpacing: "0.06em",
+                  textTransform: "uppercase" as const,
+                  color: colors.muted,
+                  marginBottom: spacing[2],
+                }}
+              >
+                Looking for
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap" as const, gap: spacing[2] }}>
+                {LOOKING.map(l => (
+                  <Tag
+                    key={l}
+                    active={selectedLooking.includes(l)}
+                    onClick={() => toggleLooking(l)}
+                  >
+                    {l}
+                  </Tag>
+                ))}
+              </div>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Loading state */}
@@ -239,8 +381,8 @@ export function PeopleDirectory() {
         </div>
       )}
 
-      {/* People grid */}
-      {filtered.length === 0 && !loadingProfiles ? (
+      {/* Empty state */}
+      {filtered.length === 0 && !loadingProfiles && (
         <div
           style={{
             fontFamily: fonts.body,
@@ -250,19 +392,58 @@ export function PeopleDirectory() {
             textAlign: "center" as const,
           }}
         >
-          No people match your filters.
+          {view === "connected" ? "No connections match your filters yet." : "No people match your filters."}
         </div>
-      ) : (
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-            gap: spacing[4],
-          }}
-        >
-          {filtered.map(person => (
-            <PersonCard key={person.id} person={person} me={profile} reason={reasons?.[person.id]} />
-          ))}
+      )}
+
+      {/* Suggested for you — ranked match picks, pinned above the rest of the grid */}
+      {suggested.length > 0 && (
+        <div style={{ marginBottom: spacing[6] }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: spacing[3] }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 7, fontFamily: fonts.mono, fontSize: fontSize.label, letterSpacing: "0.06em", textTransform: "uppercase" as const, color: colors.violet }}>
+              <Sparkles size={14} /> Suggested for you
+            </div>
+            <button
+              type="button"
+              onClick={clearSuggestions}
+              style={{ background: "transparent", border: "none", cursor: "pointer", color: colors.muted, fontFamily: fonts.mono, fontSize: fontSize.label, textTransform: "uppercase" as const, letterSpacing: "0.05em" }}
+            >
+              Clear
+            </button>
+          </div>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+              gap: spacing[4],
+            }}
+          >
+            {suggested.map(person => (
+              <PersonCard key={person.id} person={person} me={profile} reason={reasons?.[person.id]} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Main people grid */}
+      {rest.length > 0 && (
+        <div>
+          {suggested.length > 0 && (
+            <div style={{ fontFamily: fonts.mono, fontSize: fontSize.label, letterSpacing: "0.06em", textTransform: "uppercase" as const, color: colors.muted, marginBottom: spacing[3] }}>
+              All people
+            </div>
+          )}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+              gap: spacing[4],
+            }}
+          >
+            {rest.map(person => (
+              <PersonCard key={person.id} person={person} me={profile} reason={reasons?.[person.id]} />
+            ))}
+          </div>
         </div>
       )}
     </div>

@@ -5,6 +5,7 @@ import { Linkedin, Github, Twitter, Instagram, ExternalLink, MessageCircle, Cale
 import { Card } from "@/components/ui/Card"
 import { Tag } from "@/components/ui/Tag"
 import { Button } from "@/components/ui/Button"
+import { IconButtonWithTooltip } from "@/components/ui/IconButtonWithTooltip"
 import { Avatar } from "@/components/shell/Avatar"
 import { matchScore } from "@/lib/match"
 import { useSocial } from "@/components/shell/SocialProvider"
@@ -12,6 +13,12 @@ import type { Profile } from "@/types/index"
 import {
   colors, fonts, fontSize, fontWeight, spacing, radii,
 } from "@/lib/design/tokens"
+
+/** Caps a chip row at `max` and folds the rest into a "+N" overflow chip, so card heights stay even. */
+function capped(list: string[], max = 3): { shown: string[]; extra: number } {
+  if (list.length <= max) return { shown: list, extra: 0 }
+  return { shown: list.slice(0, max), extra: list.length - max }
+}
 
 export interface NormalizedPerson {
   id: string
@@ -127,23 +134,31 @@ export function PersonCard({ person, me, reason }: PersonCardProps) {
         </div>
       </div>
 
-      {/* Skill tags */}
-      {person.tags.length > 0 && (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: spacing[1], marginBottom: spacing[2] }}>
-          {person.tags.map(tag => (
-            <Tag key={tag} tone="ink">{tag}</Tag>
-          ))}
-        </div>
-      )}
+      {/* Skill tags — capped so cards with very different tag counts stay roughly the same height */}
+      {person.tags.length > 0 && (() => {
+        const { shown, extra } = capped(person.tags)
+        return (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: spacing[1], marginBottom: spacing[2] }}>
+            {shown.map(tag => (
+              <Tag key={tag} tone="ink">{tag}</Tag>
+            ))}
+            {extra > 0 && <Tag tone="ink">+{extra}</Tag>}
+          </div>
+        )
+      })()}
 
       {/* Looking chips */}
-      {person.looking.length > 0 && (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: spacing[1], marginBottom: spacing[2] }}>
-          {person.looking.map(l => (
-            <Tag key={l} tone="go">{l}</Tag>
-          ))}
-        </div>
-      )}
+      {person.looking.length > 0 && (() => {
+        const { shown, extra } = capped(person.looking)
+        return (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: spacing[1], marginBottom: spacing[2] }}>
+            {shown.map(l => (
+              <Tag key={l} tone="go">{l}</Tag>
+            ))}
+            {extra > 0 && <Tag tone="go">+{extra}</Tag>}
+          </div>
+        )
+      })()}
 
       {/* Shared overlap badge */}
       {shared.length > 0 && (
@@ -191,17 +206,30 @@ export function PersonCard({ person, me, reason }: PersonCardProps) {
         </div>
       )}
 
-      {/* Action buttons */}
-      <div style={{ display: "flex", gap: spacing[2] }}>
-        <Button variant={connected ? "secondary" : "accent"} size="sm"
+      {/* Action row: Connect is the primary action; Message/Catchup are icon-only secondary actions so the row never wraps */}
+      <div style={{ display: "flex", alignItems: "center", gap: spacing[2] }}>
+        <Button variant={connected ? "secondary" : "accent"} size="sm" full
           icon={connected ? <Check size={14} /> : <Handshake size={14} />}
           onClick={() => toggleConnection(person.id)}>
           {connected ? "Connected" : "Connect"}
         </Button>
-        <Button variant="secondary" size="sm" icon={<MessageCircle size={14} />}
-          onClick={() => openChat(chatPerson)}>Message</Button>
-        <Button variant="secondary" size="sm" icon={<CalendarDays size={14} />}
-          onClick={() => openCatchup(chatPerson)}>{hasCatchup ? "Booked" : "Catchup"}</Button>
+        <IconButtonWithTooltip
+          tooltip="Message"
+          ariaLabel={`Message ${person.name}`}
+          size={32}
+          onClick={() => openChat(chatPerson)}
+        >
+          <MessageCircle size={15} />
+        </IconButtonWithTooltip>
+        <IconButtonWithTooltip
+          tooltip={hasCatchup ? "Catchup booked" : "Schedule catchup"}
+          ariaLabel={hasCatchup ? `Catchup with ${person.name} booked` : `Schedule a catchup with ${person.name}`}
+          active={hasCatchup}
+          size={32}
+          onClick={() => openCatchup(chatPerson)}
+        >
+          <CalendarDays size={15} />
+        </IconButtonWithTooltip>
       </div>
     </Card>
   )
