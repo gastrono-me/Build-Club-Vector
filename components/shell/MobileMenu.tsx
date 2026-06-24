@@ -3,7 +3,7 @@
 import React, { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Menu, X } from "lucide-react"
+import { Menu, X, CalendarDays } from "lucide-react"
 import { colors, fonts, fontSize, fontWeight, spacing, radii, shadows, motion } from "@/lib/design/tokens"
 import { deriveMode } from "@/lib/mode"
 import { PULSE_ITEMS, LINE_ITEMS } from "@/lib/nav"
@@ -12,6 +12,7 @@ import { SimClock } from "@/components/shell/SimClock"
 import { Avatar } from "@/components/shell/Avatar"
 import { useProfile } from "@/lib/hooks/useProfile"
 import { useSocial } from "@/components/shell/SocialProvider"
+import { fmt } from "@/lib/time"
 
 /** Tiny relative-time helper: <60s "now", <60m "Nm", <24h "Nh", else "Nd" */
 function relTime(iso: string): string {
@@ -37,8 +38,9 @@ export function MobileMenu() {
   const name = loading || !profile ? "Profile" : profile.name || "Profile"
   const avatar_url = profile?.avatar_url
 
-  const { inbox, totalUnread, openPanel } = useSocial()
-  const badgeCount = totalUnread > 9 ? "9+" : String(totalUnread)
+  const { inbox, totalUnread, pendingCatchups, openPanel } = useSocial()
+  const notificationCount = totalUnread + pendingCatchups.length
+  const badgeCount = notificationCount > 9 ? "9+" : String(notificationCount)
 
   return (
     <>
@@ -74,7 +76,7 @@ export function MobileMenu() {
         }}
       >
         <Menu size={18} strokeWidth={1.8} />
-        {totalUnread > 0 && (
+        {notificationCount > 0 && (
           <span
             style={{
               position: "absolute",
@@ -230,6 +232,70 @@ export function MobileMenu() {
             <ModeToggle />
             <SimClock />
           </div>
+
+          <div style={{ height: 1, background: colors.line, margin: `0 ${spacing[3]}px` }} />
+
+          {/* Catchup requests */}
+          {pendingCatchups.length > 0 && (
+            <div style={{ padding: spacing[3] }}>
+              <div
+                style={{
+                  fontFamily: fonts.mono,
+                  fontSize: fontSize.label,
+                  color: colors.mutedSoft,
+                  letterSpacing: "0.06em",
+                  marginBottom: spacing[2],
+                }}
+              >
+                CATCHUP REQUESTS
+              </div>
+              {pendingCatchups.map((c) => (
+                <button
+                  key={c.id}
+                  onClick={() => {
+                    openPanel({ id: c.otherId, name: c.otherName ?? "Builder", avatar: c.otherAvatar }, "catchup")
+                    setOpen(false)
+                  }}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: spacing[2],
+                    width: "100%",
+                    padding: `${spacing[2]}px ${spacing[2]}px`,
+                    background: colors.violetSoft,
+                    border: "none",
+                    borderRadius: radii.md,
+                    marginBottom: spacing[1],
+                    cursor: "pointer",
+                    textAlign: "left",
+                  }}
+                >
+                  <div style={{ flexShrink: 0, color: colors.violet }}>
+                    <CalendarDays size={16} />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <span
+                      style={{
+                        display: "block",
+                        fontFamily: fonts.body,
+                        fontSize: fontSize.meta,
+                        fontWeight: fontWeight.medium,
+                        color: colors.ink,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {c.otherName ?? "Builder"} wants to catch up
+                    </span>
+                    <span style={{ fontFamily: fonts.mono, fontSize: fontSize.micro, color: colors.violet }}>
+                      {fmt(c.start_min)}–{fmt(c.end_min)}
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
 
           <div style={{ height: 1, background: colors.line, margin: `0 ${spacing[3]}px` }} />
 

@@ -21,6 +21,8 @@ export interface ChatPerson {
 
 interface SocialApi {
   catchups: CatchupAgendaRow[]
+  /** Catchups someone proposed to me that I haven't accepted/declined yet — the catchup equivalent of an unread message. */
+  pendingCatchups: CatchupAgendaRow[]
   cancelCatchup: (catchupId: string) => void
   openPanel: (p: ChatPerson, focus: "chat" | "catchup") => void
   inbox: InboxConversation[]
@@ -36,8 +38,11 @@ export function SocialProvider({ children }: { children: React.ReactNode }) {
   const [panelPerson, setPanelPerson] = useState<ChatPerson | null>(null)
   const [panelFocus, setPanelFocus] = useState<"chat" | "catchup">("chat")
 
+  const pendingCatchups = catchups.filter(c => c.direction === "received" && c.status === "proposed")
+
   const api: SocialApi = {
     catchups,
+    pendingCatchups,
     cancelCatchup,
     openPanel: (p, focus) => {
       if (focus === "chat") markRead(p.id)

@@ -2,13 +2,14 @@
 
 import React, { useState } from "react"
 import Link from "next/link"
-import { Bell } from "lucide-react"
+import { Bell, CalendarDays } from "lucide-react"
 import { SimClock } from "@/components/shell/SimClock"
 import { ModeToggle } from "@/components/shell/ModeToggle"
 import { MobileMenu } from "@/components/shell/MobileMenu"
 import { Avatar } from "@/components/shell/Avatar"
 import { useProfile } from "@/lib/hooks/useProfile"
 import { useSocial } from "@/components/shell/SocialProvider"
+import { fmt } from "@/lib/time"
 import {
   colors,
   fonts,
@@ -38,10 +39,11 @@ export function TopBar() {
   const name = loading || !profile ? "Profile" : profile.name || "Profile"
   const avatar_url = profile?.avatar_url
 
-  const { inbox, totalUnread, openPanel } = useSocial()
+  const { inbox, totalUnread, pendingCatchups, openPanel } = useSocial()
   const [open, setOpen] = useState(false)
 
-  const badgeCount = totalUnread > 9 ? "9+" : String(totalUnread)
+  const notificationCount = totalUnread + pendingCatchups.length
+  const badgeCount = notificationCount > 9 ? "9+" : String(notificationCount)
 
   return (
     <header
@@ -144,7 +146,7 @@ export function TopBar() {
           }}
         >
           <Bell size={16} strokeWidth={1.8} />
-          {totalUnread > 0 && (
+          {notificationCount > 0 && (
             <span
               style={{
                 position: "absolute",
@@ -187,7 +189,52 @@ export function TopBar() {
               zIndex: 99,
             }}
           >
-            {inbox.length === 0 ? (
+            {pendingCatchups.map((c) => (
+              <button
+                key={`catchup-${c.id}`}
+                onClick={() => {
+                  openPanel({ id: c.otherId, name: c.otherName ?? "Builder", avatar: c.otherAvatar }, "catchup")
+                  setOpen(false)
+                }}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: spacing[2],
+                  width: "100%",
+                  padding: `${spacing[3]}px ${spacing[3]}px`,
+                  background: colors.violetSoft,
+                  border: "none",
+                  borderBottom: `1px solid ${colors.line}`,
+                  cursor: "pointer",
+                  textAlign: "left",
+                }}
+              >
+                <div style={{ flexShrink: 0, color: colors.violet }}>
+                  <CalendarDays size={16} />
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <span
+                    style={{
+                      display: "block",
+                      fontFamily: fonts.body,
+                      fontSize: fontSize.meta,
+                      fontWeight: fontWeight.medium,
+                      color: colors.ink,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {c.otherName ?? "Builder"} wants to catch up
+                  </span>
+                  <span style={{ fontFamily: fonts.mono, fontSize: fontSize.micro, color: colors.violet }}>
+                    {fmt(c.start_min)}–{fmt(c.end_min)}
+                  </span>
+                </div>
+              </button>
+            ))}
+
+            {inbox.length === 0 && pendingCatchups.length === 0 ? (
               <div
                 style={{
                   padding: `${spacing[4]}px`,
@@ -197,7 +244,7 @@ export function TopBar() {
                   textAlign: "center",
                 }}
               >
-                No messages yet.
+                No notifications yet.
               </div>
             ) : (
               inbox.map((c) => (
