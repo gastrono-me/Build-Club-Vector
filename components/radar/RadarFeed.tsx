@@ -5,9 +5,13 @@ import { useRadar } from "@/lib/hooks/useRadar"
 import { PostBlocker } from "@/components/radar/PostBlocker"
 import { BlockerCard } from "@/components/radar/BlockerCard"
 import { EmbeddingPlot } from "@/components/radar/EmbeddingPlot"
-import { colors, fonts, fontSize, fontWeight, spacing, letterSpacing } from "@/lib/design/tokens"
+import { BuildLogFeed } from "@/components/radar/BuildLogFeed"
+import { colors, fonts, fontSize, fontWeight, radii, spacing, letterSpacing } from "@/lib/design/tokens"
+
+type FeedTab = "stuck" | "shipped"
 
 export function RadarFeed() {
+  const [tab, setTab] = React.useState<FeedTab>("stuck")
   const { blockers, loading, post, toggleMeToo, meTooCounts, mineMeToo, userId } = useRadar()
   const [latestId, setLatestId] = React.useState<string | null>(null)
   const latestTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -33,6 +37,48 @@ export function RadarFeed() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: spacing[6] }}>
+      {/* Stuck / Shipped toggle */}
+      <div
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 2,
+          background: colors.line,
+          borderRadius: radii.pill,
+          padding: 2,
+        }}
+      >
+        {(["stuck", "shipped"] as FeedTab[]).map(t => {
+          const active = tab === t
+          return (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              style={{
+                fontFamily: fonts.mono,
+                fontSize: fontSize.label,
+                fontWeight: fontWeight.semibold,
+                padding: `${spacing[1]}px ${spacing[3]}px`,
+                borderRadius: radii.pill,
+                border: "none",
+                cursor: "pointer",
+                letterSpacing: "0.05em",
+                lineHeight: 1.4,
+                background: active ? colors.violet : "transparent",
+                color: active ? colors.onDark : colors.mutedSoft,
+                textTransform: "uppercase",
+              }}
+            >
+              {t === "stuck" ? "Stuck" : "Shipped"}
+            </button>
+          )
+        })}
+      </div>
+
+      {tab === "shipped" && <BuildLogFeed />}
+
+      {tab === "stuck" && (
+        <>
       {/* Heading */}
       <header>
         <h1
@@ -173,6 +219,8 @@ export function RadarFeed() {
           </div>
         )}
       </section>
+        </>
+      )}
 
       <style>{`
         @keyframes radarPulse {
