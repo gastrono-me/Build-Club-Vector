@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { useProfile } from "@/lib/hooks/useProfile"
+import { normalizeSocialLink } from "@/lib/social"
 import type { Profile } from "@/types/index"
 import { ALL_TAGS, INDUSTRIES, LOOKING } from "@/types/index"
 import { Button } from "@/components/ui/Button"
@@ -141,6 +142,10 @@ export function ProfileForm() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setSaveState("saving")
+    const normalizedLinkedin = normalizeSocialLink("linkedin", linkedin)
+    const normalizedGithub = normalizeSocialLink("github", github)
+    const normalizedX = normalizeSocialLink("x", x)
+    const normalizedInstagram = normalizeSocialLink("instagram", instagram)
     const patch: Partial<Profile> = {
       name,
       occupation,
@@ -150,12 +155,16 @@ export function ProfileForm() {
       skills,
       industries,
       looking,
-      links: { linkedin, github, x, instagram },
+      links: { linkedin: normalizedLinkedin, github: normalizedGithub, x: normalizedX, instagram: normalizedInstagram },
       // Note: avatar_url is already saved on upload, don't override it here
       ...(avatarUrl && { avatar_url: avatarUrl }),
     }
     try {
       await save(patch)
+      setLinkedin(normalizedLinkedin)
+      setGithub(normalizedGithub)
+      setX(normalizedX)
+      setInstagram(normalizedInstagram)
       setSaveState("saved")
       setTimeout(() => setSaveState("idle"), 2500)
     } catch {
@@ -281,10 +290,10 @@ export function ProfileForm() {
       {/* Social links */}
       <Card>
         <div style={{ display: "flex", flexDirection: "column", gap: spacing[3] }}>
-          <Input label="LinkedIn" value={linkedin} onChange={e => setLinkedin(e.target.value)} placeholder="https://linkedin.com/in/you" type="url" />
-          <Input label="GitHub" value={github} onChange={e => setGithub(e.target.value)} placeholder="https://github.com/you" type="url" />
-          <Input label="X / Twitter" value={x} onChange={e => setX(e.target.value)} placeholder="https://x.com/you" type="url" />
-          <Input label="Instagram" value={instagram} onChange={e => setInstagram(e.target.value)} placeholder="https://instagram.com/you" type="url" />
+          <Input label="LinkedIn" value={linkedin} onChange={e => setLinkedin(e.target.value)} placeholder="@you or full link" />
+          <Input label="GitHub" value={github} onChange={e => setGithub(e.target.value)} placeholder="@you or full link" />
+          <Input label="X / Twitter" value={x} onChange={e => setX(e.target.value)} placeholder="@you or full link" />
+          <Input label="Instagram" value={instagram} onChange={e => setInstagram(e.target.value)} placeholder="@you or full link" />
         </div>
       </Card>
 
