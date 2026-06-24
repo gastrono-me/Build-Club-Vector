@@ -71,11 +71,27 @@ export function IconButtonWithTooltip({
         </div>
       )}
       {href ? (
-        <a href={href} target="_blank" rel="noopener noreferrer" aria-label={ariaLabel} style={triggerStyle}>
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={ariaLabel}
+          style={triggerStyle}
+          onFocus={() => setHover(true)}
+          onBlur={() => setHover(false)}
+        >
           {children}
         </a>
       ) : (
-        <button type="button" onClick={onClick} aria-label={ariaLabel} aria-pressed={active} style={triggerStyle}>
+        <button
+          type="button"
+          onClick={onClick}
+          aria-label={ariaLabel}
+          aria-pressed={active}
+          style={triggerStyle}
+          onFocus={() => setHover(true)}
+          onBlur={() => setHover(false)}
+        >
           {children}
         </button>
       )}

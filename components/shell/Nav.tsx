@@ -4,15 +4,35 @@ import React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { type LucideIcon } from "lucide-react"
-import { colors, fonts, fontSize, fontWeight, spacing, radii, motion } from "@/lib/design/tokens"
-import { deriveMode } from "@/lib/mode"
+import { colors, fonts, fontSize, fontWeight, spacing, radii, motion, letterSpacing } from "@/lib/design/tokens"
 import { PULSE_ITEMS, LINE_ITEMS } from "@/lib/nav"
 
-/** Desktop-only left rail. Mobile navigation lives in MobileMenu's drawer. */
+/** Mono section label above a nav group ("PULSE" / "LINE"). Shared with MobileMenu's drawer nav. */
+export function GroupLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      style={{
+        fontFamily: fonts.mono,
+        fontSize: fontSize.label,
+        fontWeight: fontWeight.medium,
+        color: colors.mutedSoft,
+        letterSpacing: letterSpacing.label,
+        textTransform: "uppercase",
+        padding: `${spacing[2]}px ${spacing[3]}px ${spacing[1]}px`,
+      }}
+    >
+      {children}
+    </div>
+  )
+}
+
+/**
+ * Desktop-only left rail. Both Pulse and Line destinations are always listed
+ * (grouped, not gated behind the mode toggle) so nothing is hidden from a
+ * first-time visitor. Mobile navigation lives in MobileMenu's drawer.
+ */
 export function Nav() {
   const pathname = usePathname()
-  const mode = deriveMode(pathname)
-  const items = mode === "pulse" ? PULSE_ITEMS : LINE_ITEMS
 
   return (
     <>
@@ -34,11 +54,17 @@ export function Nav() {
             flex-direction: column;
             padding: ${spacing[3]}px ${spacing[2]}px;
             gap: 2px;
+            overflow-y: auto;
           }
         }
       `}</style>
       <nav className="vec-nav" aria-label="Main navigation">
-        {items.map(({ label, href, Icon }) => (
+        <GroupLabel>Pulse</GroupLabel>
+        {PULSE_ITEMS.map(({ label, href, Icon }) => (
+          <NavLink key={href} label={label} href={href} Icon={Icon} active={pathname === href} />
+        ))}
+        <GroupLabel>Line</GroupLabel>
+        {LINE_ITEMS.map(({ label, href, Icon }) => (
           <NavLink key={href} label={label} href={href} Icon={Icon} active={pathname === href} />
         ))}
       </nav>

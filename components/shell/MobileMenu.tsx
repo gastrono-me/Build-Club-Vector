@@ -3,35 +3,19 @@
 import React, { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Menu, X, CalendarDays } from "lucide-react"
+import { Menu, X } from "lucide-react"
 import { colors, fonts, fontSize, fontWeight, spacing, radii, shadows, motion } from "@/lib/design/tokens"
-import { deriveMode } from "@/lib/mode"
-import { PULSE_ITEMS, LINE_ITEMS } from "@/lib/nav"
-import { ModeToggle } from "@/components/shell/ModeToggle"
+import { PULSE_ITEMS, LINE_ITEMS, type NavItem } from "@/lib/nav"
+import { GroupLabel } from "@/components/shell/Nav"
 import { SimClock } from "@/components/shell/SimClock"
 import { Avatar } from "@/components/shell/Avatar"
+import { CatchupRequestRow, MessageRow } from "@/components/shell/NotificationItems"
 import { useProfile } from "@/lib/hooks/useProfile"
 import { useSocial } from "@/components/shell/SocialProvider"
-import { fmt } from "@/lib/time"
-
-/** Tiny relative-time helper: <60s "now", <60m "Nm", <24h "Nh", else "Nd" */
-function relTime(iso: string): string {
-  const diffMs = Date.now() - new Date(iso).getTime()
-  const s = Math.floor(diffMs / 1000)
-  if (s < 60) return "now"
-  const m = Math.floor(s / 60)
-  if (m < 60) return `${m}m`
-  const h = Math.floor(m / 60)
-  if (h < 24) return `${h}h`
-  const d = Math.floor(h / 24)
-  return `${d}d`
-}
 
 /** Mobile-only hamburger trigger + slide-out drawer holding nav, mode/clock controls, and messages. */
 export function MobileMenu() {
   const pathname = usePathname()
-  const mode = deriveMode(pathname)
-  const items = mode === "pulse" ? PULSE_ITEMS : LINE_ITEMS
   const [open, setOpen] = useState(false)
 
   const { profile, loading } = useProfile()
@@ -190,46 +174,22 @@ export function MobileMenu() {
             </button>
           </div>
 
-          {/* Nav items for the current mode */}
+          {/* Nav items — both Pulse and Line destinations always listed, grouped */}
           <div style={{ display: "flex", flexDirection: "column", gap: 2, padding: spacing[3] }}>
-            {items.map(({ label, href, Icon }) => {
-              const active = pathname === href
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  onClick={() => setOpen(false)}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: spacing[3],
-                    padding: `${spacing[3]}px ${spacing[2]}px`,
-                    borderRadius: radii.md,
-                    textDecoration: "none",
-                    background: active ? colors.violetSoft : "transparent",
-                    color: active ? colors.violet : colors.ink,
-                  }}
-                >
-                  <Icon size={18} strokeWidth={active ? 2.5 : 1.75} />
-                  <span
-                    style={{
-                      fontFamily: fonts.body,
-                      fontSize: fontSize.body,
-                      fontWeight: active ? fontWeight.semibold : fontWeight.regular,
-                    }}
-                  >
-                    {label}
-                  </span>
-                </Link>
-              )
-            })}
+            <GroupLabel>Pulse</GroupLabel>
+            {PULSE_ITEMS.map(item => (
+              <MobileNavLink key={item.href} item={item} active={pathname === item.href} onClick={() => setOpen(false)} />
+            ))}
+            <GroupLabel>Line</GroupLabel>
+            {LINE_ITEMS.map(item => (
+              <MobileNavLink key={item.href} item={item} active={pathname === item.href} onClick={() => setOpen(false)} />
+            ))}
           </div>
 
           <div style={{ height: 1, background: colors.line, margin: `0 ${spacing[3]}px` }} />
 
-          {/* Mode + sim clock controls */}
+          {/* Sim clock control */}
           <div style={{ display: "flex", flexDirection: "column", gap: spacing[3], padding: spacing[3] }}>
-            <ModeToggle />
             <SimClock />
           </div>
 
@@ -250,49 +210,15 @@ export function MobileMenu() {
                 CATCHUP REQUESTS
               </div>
               {pendingCatchups.map((c) => (
-                <button
+                <CatchupRequestRow
                   key={c.id}
+                  catchup={c}
+                  variant="drawer"
                   onClick={() => {
                     openPanel({ id: c.otherId, name: c.otherName ?? "Builder", avatar: c.otherAvatar }, "catchup")
                     setOpen(false)
                   }}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: spacing[2],
-                    width: "100%",
-                    padding: `${spacing[2]}px ${spacing[2]}px`,
-                    background: colors.violetSoft,
-                    border: "none",
-                    borderRadius: radii.md,
-                    marginBottom: spacing[1],
-                    cursor: "pointer",
-                    textAlign: "left",
-                  }}
-                >
-                  <div style={{ flexShrink: 0, color: colors.violet }}>
-                    <CalendarDays size={16} />
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <span
-                      style={{
-                        display: "block",
-                        fontFamily: fonts.body,
-                        fontSize: fontSize.meta,
-                        fontWeight: fontWeight.medium,
-                        color: colors.ink,
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {c.otherName ?? "Builder"} wants to catch up
-                    </span>
-                    <span style={{ fontFamily: fonts.mono, fontSize: fontSize.micro, color: colors.violet }}>
-                      {fmt(c.start_min)}–{fmt(c.end_min)}
-                    </span>
-                  </div>
-                </button>
+                />
               ))}
             </div>
           )}
@@ -325,69 +251,52 @@ export function MobileMenu() {
               </div>
             ) : (
               inbox.map((c) => (
-                <button
+                <MessageRow
                   key={c.otherId}
+                  conversation={c}
+                  variant="drawer"
                   onClick={() => {
                     openPanel({ id: c.otherId, name: c.name ?? "Builder", avatar: c.avatar }, "chat")
                     setOpen(false)
                   }}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: spacing[2],
-                    width: "100%",
-                    padding: `${spacing[2]}px 0`,
-                    background: "transparent",
-                    border: "none",
-                    borderBottom: `1px solid ${colors.line}`,
-                    cursor: "pointer",
-                    textAlign: "left",
-                  }}
-                >
-                  <Avatar name={c.name ?? "Builder"} photo={c.avatar} size={28} />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: spacing[1] }}>
-                      <span
-                        style={{
-                          fontFamily: fonts.body,
-                          fontSize: fontSize.meta,
-                          fontWeight: fontWeight.medium,
-                          color: colors.ink,
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        {c.name ?? "Builder"}
-                      </span>
-                      <span style={{ fontFamily: fonts.mono, fontSize: fontSize.micro, color: colors.mutedSoft, flexShrink: 0 }}>
-                        {relTime(c.lastAt)}
-                      </span>
-                    </div>
-                    <span
-                      style={{
-                        fontFamily: fonts.body,
-                        fontSize: fontSize.micro,
-                        color: colors.muted,
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                        display: "block",
-                      }}
-                    >
-                      {c.lastBody}
-                    </span>
-                  </div>
-                  {c.unread > 0 && (
-                    <div style={{ width: 8, height: 8, borderRadius: radii.pill, background: colors.violet, flexShrink: 0 }} />
-                  )}
-                </button>
+                />
               ))
             )}
           </div>
         </aside>
       </div>
     </>
+  )
+}
+
+function MobileNavLink({ item, active, onClick }: { item: NavItem; active: boolean; onClick: () => void }) {
+  const { label, href, Icon } = item
+  return (
+    <Link
+      href={href}
+      onClick={onClick}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: spacing[3],
+        padding: `${spacing[3]}px ${spacing[2]}px`,
+        borderRadius: radii.md,
+        textDecoration: "none",
+        background: active ? colors.violetSoft : "transparent",
+        color: active ? colors.violet : colors.ink,
+      }}
+    >
+      <Icon size={18} strokeWidth={active ? 2.5 : 1.75} />
+      <span
+        style={{
+          fontFamily: fonts.body,
+          fontSize: fontSize.body,
+          fontWeight: active ? fontWeight.semibold : fontWeight.regular,
+        }}
+      >
+        {label}
+      </span>
+    </Link>
   )
 }
 

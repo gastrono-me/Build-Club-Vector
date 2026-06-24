@@ -9,6 +9,7 @@ import { fmt } from "@/lib/time"
 import { Card } from "@/components/ui/Card"
 import { SectionTitle } from "@/components/ui/SectionTitle"
 import { Tag } from "@/components/ui/Tag"
+import { ProfileNudge } from "@/components/now/ProfileNudge"
 import { Sparkles, Plus } from "lucide-react"
 import { colors, fonts, fontSize, fontWeight, radii, spacing } from "@/lib/design/tokens"
 import type { Session } from "@/types/index"
@@ -113,6 +114,8 @@ export function NowView() {
         margin: "0 auto",
       }}
     >
+      <ProfileNudge />
+
       <SectionTitle
         kicker="Now + Upcoming"
         title={currentDay ? currentDay.label : `Day ${day + 1}`}
