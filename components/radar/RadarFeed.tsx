@@ -12,26 +12,49 @@ type FeedTab = "stuck" | "shipped"
 
 export function RadarFeed() {
   const [tab, setTab] = React.useState<FeedTab>("stuck")
-  const { blockers, loading, post, toggleMeToo, meTooCounts, mineMeToo, userId } = useRadar()
+  const { blockers, loading, post, toggleMeToo, meTooCounts, mineMeToo, userId, bump } = useRadar()
+  // Your just-posted blocker (id-stable, set from post()'s returned id).
   const [latestId, setLatestId] = React.useState<string | null>(null)
+  // A node that just took a cross-client "me too" (transient pulse).
+  const [pulseId, setPulseId] = React.useState<string | null>(null)
+  const [toast, setToast] = React.useState<string | null>(null)
   const latestTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pulseTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null)
+  const toastTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Track the most-recently posted blocker (newest created_at in the array).
-  // Runs whenever blockers update — first blocker (desc order) is the newest.
-  React.useEffect(() => {
-    if (blockers.length === 0) return
-    const newest = blockers[0]
-    const age = Date.now() - new Date(newest.created_at).getTime()
-    if (age < 10_000) {
-      setLatestId(newest.id)
+  // Post a blocker and highlight it by the id the insert returned — no
+  // created_at/clock-skew guesswork, so the "just posted" emphasis is reliable.
+  const handlePost = React.useCallback(async (category: string, note: string) => {
+    const id = await post(category, note)
+    if (id) {
+      setLatestId(id)
       if (latestTimer.current) clearTimeout(latestTimer.current)
       latestTimer.current = setTimeout(() => setLatestId(null), 8_000)
     }
-  }, [blockers])
+  }, [post])
+
+  // When a me-too lands from another client, pulse that exact node. If it's on
+  // a blocker YOU authored, surface it — you can't me-too your own, so the rise
+  // is necessarily someone else in the room.
+  React.useEffect(() => {
+    if (!bump) return
+    setPulseId(bump.id)
+    if (pulseTimer.current) clearTimeout(pulseTimer.current)
+    pulseTimer.current = setTimeout(() => setPulseId(null), 2_600)
+
+    const b = blockers.find((x) => x.id === bump.id)
+    if (b && userId && b.author_id === userId) {
+      setToast("Someone across the room hit “me too” on your blocker.")
+      if (toastTimer.current) clearTimeout(toastTimer.current)
+      toastTimer.current = setTimeout(() => setToast(null), 5_000)
+    }
+  }, [bump, blockers, userId])
 
   React.useEffect(() => {
     return () => {
       if (latestTimer.current) clearTimeout(latestTimer.current)
+      if (pulseTimer.current) clearTimeout(pulseTimer.current)
+      if (toastTimer.current) clearTimeout(toastTimer.current)
     }
   }, [])
 
@@ -144,10 +167,11 @@ export function RadarFeed() {
         userId={userId}
         onMeToo={toggleMeToo}
         latestId={latestId}
+        pulseId={pulseId}
       />
 
       {/* Post blocker composer */}
-      <PostBlocker onPost={post} />
+      <PostBlocker onPost={handlePost} />
 
       {/* Compact blocker list */}
       <section aria-label="All blockers">
@@ -222,10 +246,56 @@ export function RadarFeed() {
         </>
       )}
 
+      {/* Live cross-client toast — the "you're not stuck alone" moment, landed */}
+      {toast && (
+        <div
+          role="status"
+          aria-live="polite"
+          style={{
+            position: "fixed",
+            left: "50%",
+            bottom: 84,
+            transform: "translateX(-50%)",
+            zIndex: 60,
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            maxWidth: "calc(100vw - 32px)",
+            background: colors.ink,
+            color: colors.onDark,
+            border: `1.5px solid ${colors.ink}`,
+            borderRadius: radii.md,
+            boxShadow: "8px 8px 0 rgba(20,20,60,0.18)",
+            padding: "11px 15px",
+            fontFamily: fonts.body,
+            fontSize: fontSize.meta,
+            lineHeight: 1.35,
+            animation: "radarToastIn 0.26s cubic-bezier(0.2,0,0,1)",
+          }}
+        >
+          <span
+            aria-hidden
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: "50%",
+              background: colors.violet,
+              flexShrink: 0,
+              boxShadow: "0 0 0 3px rgba(43,43,245,0.35)",
+            }}
+          />
+          {toast}
+        </div>
+      )}
+
       <style>{`
         @keyframes radarPulse {
           0%, 100% { opacity: 1; }
           50% { opacity: 0.35; }
+        }
+        @keyframes radarToastIn {
+          from { opacity: 0; transform: translate(-50%, 10px); }
+          to   { opacity: 1; transform: translate(-50%, 0); }
         }
       `}</style>
     </div>

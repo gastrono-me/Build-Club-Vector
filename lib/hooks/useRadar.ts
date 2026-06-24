@@ -14,14 +14,30 @@ export interface BlockerRow {
   author_avatar?: string | null
 }
 
+/** Emitted when a blocker's me-too count rises (id-stable; `seq` re-fires repeats). */
+export interface RadarBump {
+  id: string
+  n: number
+  seq: number
+}
+
 export function useRadar() {
   const [blockers, setBlockers] = useState<BlockerRow[]>([])
   const [meTooCounts, setMeTooCounts] = useState<Record<string, number>>({})
   const [mineMeToo, setMineMeToo] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
   const [userId, setUserId] = useState<string | null>(null)
+  // Cross-client "me too" landed — drives the live pulse + toast on the radar.
+  const [bump, setBump] = useState<RadarBump | null>(null)
   // Keep userId in a ref so realtime callback can access latest value without stale closure
   const userIdRef = useRef<string | null>(null)
+  // Previous me-too counts, to detect which node a realtime change bumped.
+  const prevCountsRef = useRef<Record<string, number>>({})
+  const loadedOnceRef = useRef(false)
+  const bumpSeqRef = useRef(0)
+  // Unique channel name per hook instance, so two concurrent subscribers
+  // (e.g. the Now-page pulse and the radar page) don't collide on one name.
+  const channelNameRef = useRef(`radar-${Math.random().toString(36).slice(2)}`)
 
   const fetchAll = useCallback(async () => {
     const supabase = createClient()
@@ -79,6 +95,24 @@ export function useRadar() {
       author_avatar: b.profiles?.avatar_url ?? null,
     }))
 
+    // Detect a cross-client me-too rise so the UI can pulse that exact node.
+    // Skip the first load (everything would look "new") and any count that fell.
+    if (loadedOnceRef.current) {
+      const prev = prevCountsRef.current
+      let bumpedId: string | null = null
+      let bestDelta = 0
+      for (const id in counts) {
+        const delta = counts[id] - (prev[id] ?? 0)
+        if (delta > bestDelta) { bestDelta = delta; bumpedId = id }
+      }
+      if (bumpedId) {
+        bumpSeqRef.current += 1
+        setBump({ id: bumpedId, n: counts[bumpedId], seq: bumpSeqRef.current })
+      }
+    }
+    prevCountsRef.current = counts
+    loadedOnceRef.current = true
+
     setBlockers(normalized)
     setMeTooCounts(counts)
     setMineMeToo(mine)
@@ -95,7 +129,7 @@ export function useRadar() {
     const supabase = createClient()
 
     const channel = supabase
-      .channel("radar")
+      .channel(channelNameRef.current)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "blockers" },
@@ -118,12 +152,16 @@ export function useRadar() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error("Not authenticated")
 
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("blockers")
       .insert({ author_id: user.id, category, note })
+      .select("id")
+      .single()
 
     if (error) throw error
-    // Realtime will trigger refetch
+    // Return the new id so the caller can highlight it reliably (no clock-skew
+    // heuristic). Realtime still triggers the refetch that renders it.
+    return (data?.id ?? null) as string | null
   }, [])
 
   const toggleMeToo = useCallback(async (blockerId: string) => {
@@ -149,5 +187,5 @@ export function useRadar() {
     // Realtime will trigger refetch
   }, [mineMeToo])
 
-  return { blockers, loading, post, toggleMeToo, meTooCounts, mineMeToo, userId }
+  return { blockers, loading, post, toggleMeToo, meTooCounts, mineMeToo, userId, bump }
 }

@@ -68,6 +68,8 @@ export interface EmbeddingPlotProps {
   onMeToo: (id: string) => Promise<void>
   /** Most-recently posted blocker id (to show "just posted" emphasis) */
   latestId?: string | null
+  /** Blocker id that just took a cross-client "me too" (transient pulse). */
+  pulseId?: string | null
 }
 
 export function EmbeddingPlot({
@@ -77,6 +79,7 @@ export function EmbeddingPlot({
   userId,
   onMeToo,
   latestId,
+  pulseId,
 }: EmbeddingPlotProps) {
   const [selectedId, setSelectedId] = React.useState<string | null>(null)
   const [voting, setVoting] = React.useState(false)
@@ -372,7 +375,8 @@ export function EmbeddingPlot({
           const isSelected = selectedId === b.id
           const isOwn = !!userId && b.author_id === userId
           const isLatest = b.id === latestId
-          const col = isOwn || isLatest ? colors.violet : catColor(b.category)
+          const isPulse = b.id === pulseId
+          const col = isOwn || isLatest || isPulse ? colors.violet : catColor(b.category)
           // Radius: 8px base + 0.5px per me-too, capped at 20px
           const radius = Math.min(8 + count * 0.5, 20)
           return (
@@ -410,9 +414,11 @@ export function EmbeddingPlot({
                     ? `0 0 0 2.5px ${colors.violet}, 0 0 0 5px rgba(43,43,245,0.18)`
                     : `0 0 0 1.5px ${col}`,
                   display: "block",
-                  transition: reduceMotion ? "none" : "transform 0.18s ease, box-shadow 0.18s ease",
+                  transition: reduceMotion
+                    ? "none"
+                    : "transform 0.18s ease, box-shadow 0.18s ease, width 0.32s cubic-bezier(0.34,1.56,0.64,1), height 0.32s cubic-bezier(0.34,1.56,0.64,1)",
                   transform: isSelected ? "scale(1.35)" : "scale(1)",
-                  animation: isLatest && !reduceMotion ? "plotPing 1.9s ease-out infinite" : "none",
+                  animation: (isLatest || isPulse) && !reduceMotion ? "plotPing 1.9s ease-out infinite" : "none",
                 }}
               />
             </button>

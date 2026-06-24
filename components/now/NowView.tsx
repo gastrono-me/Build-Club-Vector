@@ -10,6 +10,7 @@ import { Card } from "@/components/ui/Card"
 import { SectionTitle } from "@/components/ui/SectionTitle"
 import { Tag } from "@/components/ui/Tag"
 import { ProfileNudge } from "@/components/now/ProfileNudge"
+import { RadarPulse } from "@/components/now/RadarPulse"
 import { Sparkles, Plus } from "lucide-react"
 import { colors, fonts, fontSize, fontWeight, radii, spacing } from "@/lib/design/tokens"
 import type { Session } from "@/types/index"
@@ -132,6 +133,8 @@ export function NowView() {
       >
         {fmt(mins)}
       </div>
+
+      <RadarPulse />
 
       {liveSessions.length > 0 && (
         <section style={{ marginBottom: spacing[6] }}>
