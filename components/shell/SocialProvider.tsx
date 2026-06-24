@@ -1,11 +1,9 @@
 "use client"
 
 import React, { createContext, useContext, useState } from "react"
-import { useConnections } from "@/lib/hooks/useConnections"
-import { useCatchups, type CatchupRow } from "@/lib/hooks/useCatchups"
+import { useCatchups, type CatchupAgendaRow } from "@/lib/hooks/useCatchups"
 import { useInbox, type InboxConversation } from "@/lib/hooks/useInbox"
-import { ChatModal } from "@/components/people/ChatModal"
-import { ScheduleCatchupModal } from "@/components/people/ScheduleCatchupModal"
+import { PersonPanel } from "@/components/people/PersonPanel"
 
 export type { InboxConversation }
 
@@ -22,13 +20,9 @@ export interface ChatPerson {
 }
 
 interface SocialApi {
-  connections: Set<string>
-  toggleConnection: (personId: string) => void
-  catchups: CatchupRow[]
+  catchups: CatchupAgendaRow[]
   cancelCatchup: (catchupId: string) => void
-  addCatchup: (personId: string, day: number, startMin: number, personName?: string) => void
-  openChat: (p: ChatPerson) => void
-  openCatchup: (p: ChatPerson) => void
+  openPanel: (p: ChatPerson, focus: "chat" | "catchup") => void
   inbox: InboxConversation[]
   totalUnread: number
   markRead: (otherId: string) => void
@@ -37,23 +31,19 @@ interface SocialApi {
 const SocialContext = createContext<SocialApi | null>(null)
 
 export function SocialProvider({ children }: { children: React.ReactNode }) {
-  const { connections, toggle: toggleConnection } = useConnections()
-  const { catchups, add: addCatchup, cancel: cancelCatchup } = useCatchups()
+  const { catchups, cancel: cancelCatchup } = useCatchups()
   const { conversations: inbox, totalUnread, markRead } = useInbox()
-  const [chatPerson, setChatPerson] = useState<ChatPerson | null>(null)
-  const [catchupPerson, setCatchupPerson] = useState<ChatPerson | null>(null)
+  const [panelPerson, setPanelPerson] = useState<ChatPerson | null>(null)
+  const [panelFocus, setPanelFocus] = useState<"chat" | "catchup">("chat")
 
   const api: SocialApi = {
-    connections,
-    toggleConnection,
     catchups,
     cancelCatchup,
-    addCatchup,
-    openChat: (p) => {
-      markRead(p.id)
-      setChatPerson(p)
+    openPanel: (p, focus) => {
+      if (focus === "chat") markRead(p.id)
+      setPanelPerson(p)
+      setPanelFocus(focus)
     },
-    openCatchup: (p) => setCatchupPerson(p),
     inbox,
     totalUnread,
     markRead,
@@ -62,17 +52,11 @@ export function SocialProvider({ children }: { children: React.ReactNode }) {
   return (
     <SocialContext.Provider value={api}>
       {children}
-      {chatPerson && (
-        <ChatModal
-          person={chatPerson}
-          onClose={() => setChatPerson(null)}
-          onOpenSchedule={() => { setCatchupPerson(chatPerson); setChatPerson(null) }}
-        />
-      )}
-      {catchupPerson && (
-        <ScheduleCatchupModal
-          person={catchupPerson}
-          onClose={() => setCatchupPerson(null)}
+      {panelPerson && (
+        <PersonPanel
+          person={panelPerson}
+          focus={panelFocus}
+          onClose={() => setPanelPerson(null)}
         />
       )}
     </SocialContext.Provider>

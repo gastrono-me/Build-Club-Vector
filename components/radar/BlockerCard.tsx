@@ -38,7 +38,7 @@ export function BlockerCard({
   onMeToo,
 }: BlockerCardProps) {
   const [voting, setVoting] = React.useState(false)
-  const { openChat } = useSocial()
+  const { openPanel } = useSocial()
 
   const authorName = blocker.author_id == null
     ? "Community"
@@ -205,7 +205,7 @@ export function BlockerCard({
         )}
 
         {blocker.author_id && !isOwn && (
-          <button onClick={() => openChat({ id: blocker.author_id!, name: blocker.author_name ?? "Attendee", avatar: blocker.author_avatar })}
+          <button onClick={() => openPanel({ id: blocker.author_id!, name: blocker.author_name ?? "Attendee", avatar: blocker.author_avatar }, "chat")}
             title={`Message ${blocker.author_name ?? "attendee"}`} aria-label="Message author"
             style={{ display: "inline-flex", alignItems: "center", gap: 5, border: `1.4px solid ${colors.line}`, background: colors.surface, color: colors.ink, borderRadius: radii.md, padding: "6px 10px", fontFamily: fonts.mono, fontSize: fontSize.label, cursor: "pointer" }}>
             <MessageCircle size={13} /> Message

@@ -38,12 +38,14 @@ export interface AgendaItem extends ScheduleItem {
 /**
  * Merge saved sessions and 1:1 catchups into a single titled agenda for
  * conflict checks. Catchups expose start_min/end_min; map them to start/end.
+ * Callers decide which catchup statuses count as committed time (e.g. only
+ * 'accepted') before passing them in here.
  * Ported from main App.jsx:264-273.
  */
 export function buildAgenda(
   sessions: AgendaItem[],
-  catchups: { id: string; person_id: string; day: number; start_min: number; end_min: number; person_name?: string | null }[],
-  nameFor: (personId: string) => string,
+  catchups: { id: string; otherId: string; day: number; start_min: number; end_min: number; otherName?: string | null }[],
+  nameFor: (otherId: string) => string,
   excludeCatchupId?: string
 ): AgendaItem[] {
   const catchupItems: AgendaItem[] = catchups
@@ -53,7 +55,7 @@ export function buildAgenda(
       day: c.day,
       start: c.start_min,
       end: c.end_min,
-      title: `Catchup with ${c.person_name ?? nameFor(c.person_id)}`,
+      title: `Catchup with ${c.otherName ?? nameFor(c.otherId)}`,
       kind: 'catchup',
     }))
   return [...sessions, ...catchupItems]

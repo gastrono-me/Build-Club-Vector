@@ -68,7 +68,7 @@ export function ClawbieChat() {
       days: days.map(d => ({ idx: d.idx, label: d.label, date: d.date })),
       venues,
       schedule: saved,
-      catchups: catchups.map(c => ({ id: c.id, day: c.day, start: c.start_min, end: c.end_min, personId: c.person_id })),
+      catchups: catchups.filter(c => c.status === "accepted").map(c => ({ id: c.id, day: c.day, start: c.start_min, end: c.end_min, personId: c.otherId })),
       currentDay: day,
       currentMins: mins,
     }

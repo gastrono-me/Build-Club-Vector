@@ -38,7 +38,7 @@ export function TopBar() {
   const name = loading || !profile ? "Profile" : profile.name || "Profile"
   const avatar_url = profile?.avatar_url
 
-  const { inbox, totalUnread, openChat } = useSocial()
+  const { inbox, totalUnread, openPanel } = useSocial()
   const [open, setOpen] = useState(false)
 
   const badgeCount = totalUnread > 9 ? "9+" : String(totalUnread)
@@ -204,7 +204,7 @@ export function TopBar() {
                 <button
                   key={c.otherId}
                   onClick={() => {
-                    openChat({ id: c.otherId, name: c.name ?? "Builder", avatar: c.avatar })
+                    openPanel({ id: c.otherId, name: c.name ?? "Builder", avatar: c.avatar }, "chat")
                     setOpen(false)
                   }}
                   style={{

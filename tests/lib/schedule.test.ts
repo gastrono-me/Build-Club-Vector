@@ -37,7 +37,7 @@ describe('schedule', () => {
 
 describe('buildAgenda', () => {
   const sessions = [{ id: 's1', day: 1, start: 600, end: 660, title: 'Talk', kind: 'session' as const }]
-  const catchups = [{ id: 'c1', person_id: 'a1', day: 1, start_min: 630, end_min: 645 }]
+  const catchups = [{ id: 'c1', otherId: 'a1', day: 1, start_min: 630, end_min: 645 }]
 
   it('merges sessions and catchups into one titled list', () => {
     const out = buildAgenda(sessions, catchups, () => 'Mai Tran')
@@ -51,8 +51,8 @@ describe('buildAgenda', () => {
     expect(out.filter(i => i.kind === 'catchup')).toHaveLength(0)
   })
 
-  it('person_name wins over nameFor when present', () => {
-    const catchupsWithName = [{ id: 'c2', person_id: 'a2', day: 1, start_min: 700, end_min: 715, person_name: 'Mai Tran' }]
+  it('otherName wins over nameFor when present', () => {
+    const catchupsWithName = [{ id: 'c2', otherId: 'a2', day: 1, start_min: 700, end_min: 715, otherName: 'Mai Tran' }]
     const out = buildAgenda(sessions, catchupsWithName, () => 'Fallback Name')
     expect(out.find(i => i.kind === 'catchup')?.title).toBe('Catchup with Mai Tran')
   })

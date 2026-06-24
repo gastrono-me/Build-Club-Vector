@@ -1,7 +1,7 @@
 "use client"
 
 import React from "react"
-import { Linkedin, Github, Twitter, Instagram, ExternalLink, MessageCircle, CalendarDays, Handshake, Check, Sparkles } from "lucide-react"
+import { Linkedin, Github, Twitter, Instagram, ExternalLink, MessageCircle, CalendarDays, Sparkles } from "lucide-react"
 import { Card } from "@/components/ui/Card"
 import { Tag } from "@/components/ui/Tag"
 import { Button } from "@/components/ui/Button"
@@ -57,9 +57,8 @@ export function PersonCard({ person, me, reason }: PersonCardProps) {
   }
   const { shared } = matchScore(meForMatch, personForMatch)
 
-  const { connections, toggleConnection, openChat, openCatchup, catchups } = useSocial()
-  const connected = connections.has(person.id)
-  const hasCatchup = catchups.some(c => c.person_id === person.id)
+  const { openPanel, catchups } = useSocial()
+  const hasCatchup = catchups.some(c => c.otherId === person.id)
   const chatPerson = {
     id: person.id, name: person.name, occupation: person.occupation,
     tags: person.tags, industries: person.industries, looking: person.looking,
@@ -206,27 +205,19 @@ export function PersonCard({ person, me, reason }: PersonCardProps) {
         </div>
       )}
 
-      {/* Action row: Connect is the primary action; Message/Catchup are icon-only secondary actions so the row never wraps */}
+      {/* Action row: Message is the primary action; Catchup is an icon-only secondary action */}
       <div style={{ display: "flex", alignItems: "center", gap: spacing[2] }}>
-        <Button variant={connected ? "secondary" : "accent"} size="sm" full
-          icon={connected ? <Check size={14} /> : <Handshake size={14} />}
-          onClick={() => toggleConnection(person.id)}>
-          {connected ? "Connected" : "Connect"}
+        <Button variant="accent" size="sm" full
+          icon={<MessageCircle size={14} />}
+          onClick={() => openPanel(chatPerson, "chat")}>
+          Message
         </Button>
-        <IconButtonWithTooltip
-          tooltip="Message"
-          ariaLabel={`Message ${person.name}`}
-          size={32}
-          onClick={() => openChat(chatPerson)}
-        >
-          <MessageCircle size={15} />
-        </IconButtonWithTooltip>
         <IconButtonWithTooltip
           tooltip={hasCatchup ? "Catchup booked" : "Schedule catchup"}
           ariaLabel={hasCatchup ? `Catchup with ${person.name} booked` : `Schedule a catchup with ${person.name}`}
           active={hasCatchup}
           size={32}
-          onClick={() => openCatchup(chatPerson)}
+          onClick={() => openPanel(chatPerson, "catchup")}
         >
           <CalendarDays size={15} />
         </IconButtonWithTooltip>

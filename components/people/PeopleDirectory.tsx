@@ -21,7 +21,8 @@ type View = "all" | "connected"
 
 export function PeopleDirectory() {
   const { profile } = useProfile()
-  const { connections } = useSocial()
+  const { catchups } = useSocial()
+  const connectedIds = new Set(catchups.map(c => c.otherId))
 
   const [realProfiles, setRealProfiles] = useState<NormalizedPerson[]>([])
   const [signedInId, setSignedInId] = useState<string | null>(null)
@@ -95,7 +96,7 @@ export function PeopleDirectory() {
 
   // Apply All / Connected view
   const filtered = view === "connected"
-    ? afterChips.filter(p => connections.has(p.id))
+    ? afterChips.filter(p => connectedIds.has(p.id))
     : afterChips
 
   const activeFilterCount = selectedSkills.length + selectedIndustries.length + selectedLooking.length
@@ -197,7 +198,7 @@ export function PeopleDirectory() {
                 textTransform: "uppercase",
               }}
             >
-              {v === "all" ? "All" : `Connected (${connections.size})`}
+              {v === "all" ? "All" : `Connected (${connectedIds.size})`}
             </button>
           )
         })}
