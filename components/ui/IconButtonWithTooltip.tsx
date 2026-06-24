@@ -12,6 +12,7 @@ export function IconButtonWithTooltip({
   children,
   ariaLabel,
   size = 24,
+  tooltipPosition = "bottom",
 }: {
   tooltip: string
   onClick?: () => void
@@ -21,6 +22,8 @@ export function IconButtonWithTooltip({
   ariaLabel: string
   /** Diameter in px. Defaults to 24 (inline, e.g. session cards). Use 32+ for primary touch targets. */
   size?: number
+  /** Side the tooltip bubble opens toward. Use "top" when the button sits at the bottom of a card with overflow:hidden, or the bubble gets clipped. */
+  tooltipPosition?: "top" | "bottom"
 }) {
   const [hover, setHover] = useState(false)
   const triggerStyle: React.CSSProperties = {
@@ -47,7 +50,9 @@ export function IconButtonWithTooltip({
         <div
           style={{
             position: "absolute",
-            top: "calc(100% + 6px)",
+            ...(tooltipPosition === "top"
+              ? { bottom: "calc(100% + 6px)" }
+              : { top: "calc(100% + 6px)" }),
             right: 0,
             background: colors.ink,
             color: colors.onDark,

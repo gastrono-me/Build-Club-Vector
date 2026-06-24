@@ -70,8 +70,9 @@ export function PeopleDirectory() {
     fetchProfiles()
   }, [])
 
-  // Real users only; exclude signed-in user
+  // Real users only; the signed-in user's own profile is shown separately, pinned above the directory
   const allPeople: NormalizedPerson[] = realProfiles.filter(p => p.id !== signedInId)
+  const selfPerson = realProfiles.find(p => p.id === signedInId) ?? null
 
   // Apply keyword search (NormalizedPerson lacks an index signature required by SearchablePerson,
   // so we cast through unknown on the input and output)
@@ -394,6 +395,18 @@ export function PeopleDirectory() {
           }}
         >
           {view === "connected" ? "No connections match your filters yet." : "No people match your filters."}
+        </div>
+      )}
+
+      {/* Your own profile — pinned above the directory, not part of search/filter/match results */}
+      {selfPerson && (
+        <div style={{ marginBottom: spacing[6] }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 7, fontFamily: fonts.mono, fontSize: fontSize.label, letterSpacing: "0.06em", textTransform: "uppercase" as const, color: colors.muted, marginBottom: spacing[3] }}>
+            Your profile
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: spacing[4] }}>
+            <PersonCard person={selfPerson} me={profile} isSelf />
+          </div>
         </div>
       )}
 

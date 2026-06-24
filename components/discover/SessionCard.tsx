@@ -100,7 +100,7 @@ export function SessionCard({
         <Tag tone={isLive ? "live" : "violet"}>{session.type}</Tag>
         {session.lumaUrl && (
           <div style={{ marginLeft: "auto" }}>
-            <IconButtonWithTooltip tooltip="Sign up on Luma" ariaLabel="Sign up on Luma" href={session.lumaUrl}>
+            <IconButtonWithTooltip tooltip="Sign up on Luma" ariaLabel="Sign up on Luma" href={session.lumaUrl} tooltipPosition="top">
               <img src="/luma-logo.png" alt="" width={13} height={13} />
             </IconButtonWithTooltip>
           </div>

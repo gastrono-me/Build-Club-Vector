@@ -44,9 +44,11 @@ interface PersonCardProps {
   person: NormalizedPerson
   me: Profile | null
   reason?: string
+  /** Render as the signed-in user's own card: no Message/Catchup actions, a "You" tag instead. */
+  isSelf?: boolean
 }
 
-export function PersonCard({ person, me, reason }: PersonCardProps) {
+export function PersonCard({ person, me, reason, isSelf }: PersonCardProps) {
   const meForMatch = me
     ? { tags: me.skills, industries: me.industries, looking: me.looking }
     : null
@@ -159,8 +161,15 @@ export function PersonCard({ person, me, reason }: PersonCardProps) {
         )
       })()}
 
+      {/* Self badge */}
+      {isSelf && (
+        <div style={{ marginBottom: spacing[2] }}>
+          <Tag tone="ink">You</Tag>
+        </div>
+      )}
+
       {/* Shared overlap badge */}
-      {shared.length > 0 && (
+      {!isSelf && shared.length > 0 && (
         <div style={{ marginBottom: spacing[2] }}>
           <Tag tone="violet">{shared.length} shared</Tag>
         </div>
@@ -206,22 +215,25 @@ export function PersonCard({ person, me, reason }: PersonCardProps) {
       )}
 
       {/* Action row: Message is the primary action; Catchup is an icon-only secondary action */}
-      <div style={{ display: "flex", alignItems: "center", gap: spacing[2] }}>
-        <Button variant="accent" size="sm" full
-          icon={<MessageCircle size={14} />}
-          onClick={() => openPanel(chatPerson, "chat")}>
-          Message
-        </Button>
-        <IconButtonWithTooltip
-          tooltip={hasCatchup ? "Catchup booked" : "Schedule catchup"}
-          ariaLabel={hasCatchup ? `Catchup with ${person.name} booked` : `Schedule a catchup with ${person.name}`}
-          active={hasCatchup}
-          size={32}
-          onClick={() => openPanel(chatPerson, "catchup")}
-        >
-          <CalendarDays size={15} />
-        </IconButtonWithTooltip>
-      </div>
+      {!isSelf && (
+        <div style={{ display: "flex", alignItems: "center", gap: spacing[2] }}>
+          <Button variant="accent" size="sm" full
+            icon={<MessageCircle size={14} />}
+            onClick={() => openPanel(chatPerson, "chat")}>
+            Message
+          </Button>
+          <IconButtonWithTooltip
+            tooltip={hasCatchup ? "Catchup booked" : "Schedule catchup"}
+            ariaLabel={hasCatchup ? `Catchup with ${person.name} booked` : `Schedule a catchup with ${person.name}`}
+            active={hasCatchup}
+            size={32}
+            tooltipPosition="top"
+            onClick={() => openPanel(chatPerson, "catchup")}
+          >
+            <CalendarDays size={15} />
+          </IconButtonWithTooltip>
+        </div>
+      )}
     </Card>
   )
 }
