@@ -2,41 +2,8 @@
 
 import React from "react"
 import type { BlockerRow } from "@/lib/hooks/useRadar"
+import { layoutField, similarityLinks } from "@/lib/radar/similarity"
 import { colors, fonts, fontSize, fontWeight, spacing, shadows, letterSpacing } from "@/lib/design/tokens"
-
-// ---- Cluster anchors (normalised 0-1 in plot space) ----
-const CATEGORY_ANCHORS: Record<string, { x: number; y: number }> = {
-  "RAG/Retrieval":    { x: 0.27, y: 0.65 },
-  "hackathon help":   { x: 0.62, y: 0.78 },
-  "Deploy/Infra":     { x: 0.78, y: 0.22 },
-  "Agent loops":      { x: 0.45, y: 0.72 },
-  "Auth/Login":       { x: 0.20, y: 0.30 },
-  "Rate limits/Cost": { x: 0.68, y: 0.38 },
-  "UI polish":        { x: 0.35, y: 0.48 },
-  "Demo prep":        { x: 0.55, y: 0.85 },
-  "Data/Eval":        { x: 0.30, y: 0.55 },
-  "Other":            { x: 0.50, y: 0.45 },
-}
-
-function hashCode(s: string): number {
-  let h = 5381
-  for (let i = 0; i < s.length; i++) {
-    h = ((h << 5) + h) ^ s.charCodeAt(i)
-    h = h >>> 0
-  }
-  return h
-}
-
-function nodePosition(id: string, category: string): { x: number; y: number } {
-  const anchor = CATEGORY_ANCHORS[category] ?? { x: 0.50, y: 0.45 }
-  const h = hashCode(id)
-  const jx = ((h & 0xFF) / 255 - 0.5) * 0.18
-  const jy = (((h >> 8) & 0xFF) / 255 - 0.5) * 0.18
-  return {
-    x: Math.max(0.06, Math.min(0.94, anchor.x + jx)),
-    y: Math.max(0.06, Math.min(0.94, anchor.y + jy)),
-  }
-}
 
 // Coordinate transforms: normalised (0-1) -> SVG user space (margins: 6px pad, 90% range)
 function px(x: number) { return 6 + x * 88 }
@@ -90,40 +57,23 @@ export function EmbeddingPlot({
   )
 
   // Compute node positions (stable — based on id, not array order)
-  const positions = React.useMemo(() => {
-    const map: Record<string, { x: number; y: number }> = {}
-    for (const b of blockers) {
-      map[b.id] = nodePosition(b.id, b.category)
-    }
-    return map
-  }, [blockers])
+  // Layout + links depend only on blocker *content* (id/category/note), not on
+  // me-too counts — so tapping "me too" never re-solves the field or makes
+  // nodes jump. Same content always yields the same field (pure + deterministic).
+  const layoutKey = React.useMemo(
+    () => blockers.map((b) => `${b.id}${b.category}${b.note}`).join(""),
+    [blockers],
+  )
 
-  // Compute vector lines: for each blocker, link to nearest same-category neighbour
-  const links = React.useMemo(() => {
-    const result: Array<{ a: string; b: string }> = []
-    const seen = new Set<string>()
-    for (const b of blockers) {
-      const pos = positions[b.id]
-      if (!pos) continue
-      let bestId: string | null = null
-      let bestDist = Infinity
-      for (const other of blockers) {
-        if (other.id === b.id || other.category !== b.category) continue
-        const opos = positions[other.id]
-        if (!opos) continue
-        const d = Math.hypot(pos.x - opos.x, pos.y - opos.y)
-        if (d < bestDist) { bestDist = d; bestId = other.id }
-      }
-      if (bestId) {
-        const key = [b.id, bestId].sort().join("|")
-        if (!seen.has(key)) {
-          seen.add(key)
-          result.push({ a: b.id, b: bestId })
-        }
-      }
-    }
-    return result
-  }, [blockers, positions])
+  // Real embedding field: position by text similarity (TF-IDF cosine), seeded
+  // from category anchors and relaxed with similarity forces.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const positions = React.useMemo(() => layoutField(blockers), [layoutKey])
+
+  // Vector lines connect genuinely similar blockers — across categories, not
+  // just geometric neighbours.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const links = React.useMemo(() => similarityLinks(blockers), [layoutKey])
 
   const selectedBlocker = blockers.find((b) => b.id === selectedId) ?? null
 
@@ -257,8 +207,8 @@ export function EmbeddingPlot({
           <line x1={2} y1={98} x2={98} y2={98} stroke={colors.ink} strokeWidth={0.6} />
           <line x1={2} y1={98} x2={2} y2={2} stroke={colors.ink} strokeWidth={0.6} />
 
-          {/* Vector lines between same-category neighbours */}
-          {links.map(({ a, b }) => {
+          {/* Vector lines between genuinely similar blockers (TF-IDF cosine) */}
+          {links.map(({ a, b, sim }) => {
             const pa = positions[a]
             const pb = positions[b]
             if (!pa || !pb) return null
@@ -266,7 +216,10 @@ export function EmbeddingPlot({
             const wb = meTooCounts[b] ?? 0
             const w = Math.min(wa, wb)
             const sw = Math.max(0.8, Math.min(7, 0.7 + w * 0.16))
-            const opacity = w > 0 ? Math.min(0.85, 0.25 + w * 0.03) : 0.12
+            // Base visibility tracks similarity strength, then me-too adds weight,
+            // so a strong text match reads even before anyone has voted.
+            const simOpacity = 0.12 + Math.min(0.28, sim * 0.4)
+            const opacity = w > 0 ? Math.min(0.85, simOpacity + w * 0.03) : simOpacity
             // Emphasise lines involving the selected node
             const isActive = selectedId === a || selectedId === b
             return (
