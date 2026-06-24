@@ -37,8 +37,6 @@ export const CATEGORY_ANCHORS: Record<string, Point> = {
   Other: { x: 0.5, y: 0.45 },
 }
 
-const DEFAULT_ANCHOR: Point = { x: 0.5, y: 0.45 }
-
 /** Stable string hash (djb2-xor). Drives deterministic per-id seed jitter. */
 export function hashCode(s: string): number {
   let h = 5381
@@ -194,9 +192,26 @@ export interface LayoutOptions {
   threshold?: number
   /** Plot-space clamp margin. */
   margin?: number
+  /** Override the category->anchor map (e.g. industries for the People field). */
+  anchors?: Record<string, Point>
 }
 
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v))
+
+/**
+ * Stable anchor for a category. Known categories use the provided map; anything
+ * else gets a deterministic point spread across the mid-field from its hash, so
+ * any taxonomy (blocker categories, industries, …) lays out sensibly.
+ */
+function anchorFor(category: string, anchors: Record<string, Point>): Point {
+  const known = anchors[category]
+  if (known) return known
+  const h = hashCode(category)
+  return {
+    x: 0.2 + ((h & 0xff) / 255) * 0.6,
+    y: 0.2 + (((h >> 8) & 0xff) / 255) * 0.6,
+  }
+}
 
 /**
  * Lay out the field: seed each node at its category anchor (+ deterministic
@@ -211,13 +226,14 @@ export function layoutField(items: SimItem[], opts: LayoutOptions = {}): Record<
   const K_REPEL = opts.repel ?? 0.02
   const THRESH = opts.threshold ?? 0.12
   const MARGIN = opts.margin ?? 0.06
+  const ANCHOR_MAP = opts.anchors ?? CATEGORY_ANCHORS
   const REPEL_RANGE = 0.12
 
   // Seed positions: anchor + deterministic jitter (same as the original field).
   const pos: Record<string, Point> = {}
   const anchors: Record<string, Point> = {}
   for (const it of items) {
-    const anchor = CATEGORY_ANCHORS[it.category] ?? DEFAULT_ANCHOR
+    const anchor = anchorFor(it.category, ANCHOR_MAP)
     anchors[it.id] = anchor
     const h = hashCode(it.id)
     const jx = ((h & 0xff) / 255 - 0.5) * 0.18

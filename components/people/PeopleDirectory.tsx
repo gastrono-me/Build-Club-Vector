@@ -13,6 +13,7 @@ import { Tag } from "@/components/ui/Tag"
 import { Button } from "@/components/ui/Button"
 import { SectionTitle } from "@/components/ui/SectionTitle"
 import { PersonCard, type NormalizedPerson } from "@/components/people/PersonCard"
+import { PeopleField } from "@/components/people/PeopleField"
 import type { Profile } from "@/types/index"
 import { ALL_TAGS, INDUSTRIES, LOOKING } from "@/types/index"
 import { colors, fonts, fontSize, fontWeight, radii, spacing } from "@/lib/design/tokens"
@@ -204,6 +205,9 @@ export function PeopleDirectory() {
           )
         })}
       </div>
+
+      {/* People field — the room as an embedding field, vectors to your complements */}
+      <PeopleField people={allPeople} me={profile} meId={signedInId} />
 
       {/* Who should I meet CTA */}
       <div style={{ background: colors.ink, borderRadius: radii["2xl"], padding: 16, marginBottom: spacing[5], display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap" }}>
